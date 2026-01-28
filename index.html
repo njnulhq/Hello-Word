@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义工具箱 - 模块化管理版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        /* 控制面板 */
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #219653;
+        }
+        
+        .mode-indicator {
+            margin-left: auto;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #555;
+            border: 1px solid #e9ecef;
+        }
+        
+        .edit-mode .module {
+            border: 2px dashed #3498db;
+            position: relative;
+        }
+        
+        /* 模块网格容器 */
+        .modules-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+        
+        /* 单个模块样式 */
+        .module {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .module:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+        }
+        
+        /* 模块头部 */
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        
+        .module-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .module-title-icon {
+            font-size: 1.2em;
+        }
+        
+        .module-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #e9ecef;
+        }
+        
+        /* 模块内容区 - 不同类型的布局 */
+        .module-content.grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .module-content.list-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .module-content.card-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        /* 工具项目样式 */
+        .tool-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .tool-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .list-layout .tool-item {
+            flex-direction: row;
+            justify-content: flex-start;
+        }
+        
+        .card-layout .tool-item {
+            flex-direction: column;
+            text-align: center;
+            justify-content: center;
+        }
+        
+        .tool-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 10px;
+            font-size: 20px;
+            color: #3498db;
+        }
+        
+        .tool-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .tool-info {
+            flex: 1;
+        }
+        
+        .tool-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .tool-desc {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .card-layout .tool-info {
+            text-align: center;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        /* 编辑模式下的特殊元素 */
+        .edit-mode .module::before {
+            content: '⋮⋮';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #95a5a6;
+            cursor: move;
+            font-size: 18px;
+            z-index: 10;
+        }
+        
+        .empty-module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border: 2px dashed #ced4da;
+            border-radius: 15px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .empty-module:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .empty-module-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .modules-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .module-content.grid-layout,
+            .module-content.card-layout {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .control-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .mode-indicator {
+                margin-left: 0;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .module-content.grid-layout,
+            .module-content.card-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 自定义智能工具箱</h1>
+            <p class="subtitle">拖拽调整 | 自定义模块 | 一键保存 | 多设备同步</p>
+        </header>
+        
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <button class="btn" onclick="toggleEditMode()">
+                <span id="editIcon">✏️</span>
+                <span id="editText">进入编辑模式</span>
+            </button>
+            
+            <button class="btn btn-success" onclick="showAddModuleModal()">
+                ➕ 添加新模块
+            </button>
+            
+            <button class="btn btn-secondary" onclick="showAddToolModal()">
+                🔧 添加工具到模块
+            </button>
+            
+            <button class="btn btn-secondary" onclick="exportConfig()">
+                💾 导出配置
+            </button>
+            
+            <button class="btn btn-secondary" onclick="importConfig()">
+                📂 导入配置
+            </button>
+            
+            <div class="mode-indicator" id="modeIndicator">
+                🔒 浏览模式
+            </div>
+        </div>
+        
+        <!-- 模块容器 -->
+        <div class="modules-container" id="modulesContainer">
+            <!-- 模块会在这里动态生成 -->
+            <div class="empty-module" onclick="showAddModuleModal()">
+                <div class="empty-module-icon">📦</div>
+                <div>点击这里添加第一个模块</div>
+                <div style="font-size: 14px; margin-top: 10px;">或使用上方的"添加新模块"按钮</div>
+            </div>
+        </div>
+        
+        <!-- 添加模块模态框 -->
+        <div class="modal" id="addModuleModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">➕ 创建新模块</div>
+                    <button class="close-modal" onclick="closeAddModuleModal()">×</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="moduleName">模块名称</label>
+                    <input type="text" id="moduleName" placeholder="例如：科研工具、常用网站">
+                </div>
+                
+                <div class="form-group">
+                    <label for="moduleIcon">模块图标</label>
+                    <select id="moduleIcon">
+                        <option value="🔬">🔬 科研</option>
+                        <option value="🌐">🌐 网络</option>
+                        <option value="📚">📚 学术</option>
+                        <option value="💼">💼 办公</option>
+                        <option value="🎮">🎮 娱乐</option>
+                        <option value="🛠️">🛠️ 工具</option>
+                        <option value="📊">📊 数据</option>
+                        <option value="🎨">🎨 设计</option>
+                        <option value="💻">💻 编程</option>
+                        <option value="📱">📱 移动</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="moduleLayout">布局样式</label>
+                    <select id="moduleLayout">
+                        <option value="grid-layout">网格布局（适合大量工具）</option>
+                        <option value="list-layout">列表布局（适合详细展示）</option>
+                        <option value="card-layout">卡片布局（美观简洁）</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="moduleColor">主题颜色</label>
+                    <input type="color" id="moduleColor" value="#3498db">
+                </div>
+                
+                <div class="form-group">
+                    <label for="moduleDescription">模块描述（可选）</label>
+                    <textarea id="moduleDescription" rows="3" placeholder="简要描述这个模块的用途"></textarea>
+                </div>
+                
+                <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="createNewModule()">
+                    创建模块
+                </button>
+            </div>
+        </div>
+        
+        <!-- 添加工具模态框 -->
+        <div class="modal" id="addToolModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">🔧 添加新工具</div>
+                    <button class="close-modal" onclick="closeAddToolModal()">×</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="targetModule">添加到哪个模块？</label>
+                    <select id="targetModule">
+                        <!-- 模块选项会动态生成 -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="toolName">工具名称</label>
+                    <input type="text" id="toolName" placeholder="例如：Google Earth Engine">
+                </div>
+                
+                <div class="form-group">
+                    <label for="toolUrl">工具网址</label>
+                    <input type="url" id="toolUrl" placeholder="https://example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="toolIcon">工具图标（可选）</label>
+                    <input type="text" id="toolIcon" placeholder="输入图标URL或Emoji，例如：🌐 或 https://example.com/icon.png">
+                    <small style="color: #7f8c8d;">提示：可以输入emoji表情或图片链接</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="toolDescription">工具描述</label>
+                    <input type="text" id="toolDescription" placeholder="简要描述这个工具的功能">
+                </div>
+                
+                <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="addNewTool()">
+                    添加工具
+                </button>
+            </div>
+        </div>
+        
+        <!-- 编辑模块模态框 -->
+        <div class="modal" id="editModuleModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">⚙️ 编辑模块</div>
+                    <button class="close-modal" onclick="closeEditModuleModal()">×</button>
+                </div>
+                <div id="editModuleContent">
+                    <!-- 编辑内容会动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <footer style="text-align: center; padding: 30px; color: #7f8c8d;">
+            <p>© 2023 自定义工具箱 | 配置已自动保存到本地</p>
+            <p style="font-size: 14px; margin-top: 10px;">提示：进入编辑模式可以拖拽调整模块顺序</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局状态
+        let isEditMode = false;
+        let currentModules = [];
+        let currentEditingModuleId = null;
+        
+        // 模块预设数据（初始状态）
+        const defaultModules = [
+            {
+                id: 'search-tools',
+                name: '搜索工具',
+                icon: '🌐',
+                layout: 'grid-layout',
+                color: '#3498db',
+                description: '各类信息检索工具',
+                tools: [
+                    { name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
+                    { name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
+                    { name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
+                ]
+            },
+            {
+                id: 'research-tools',
+                name: '科研工具',
+                icon: '🔬',
+                layout: 'card-layout',
+                color: '#27ae60',
+                description: '遥感与科研相关工具',
+                tools: [
+                    { name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
+                    { name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
+                    { name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
+                ]
+            }
+        ];
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadModules();
+            renderModules();
+            updateTargetModuleSelect();
+        });
+        
+        // 加载模块数据
+        function loadModules() {
+            const saved = localStorage.getItem('toolbox-modules');
+            if (saved) {
+                currentModules = JSON.parse(saved);
+            } else {
+                currentModules = JSON.parse(JSON.stringify(defaultModules));
+                saveModules();
+            }
+        }
+        
+        // 保存模块数据
+        function saveModules() {
+            localStorage.setItem('toolbox-modules', JSON.stringify(currentModules));
+        }
+        
+        // 渲染所有模块
+        function renderModules() {
+            const container = document.getElementById('modulesContainer');
+            container.innerHTML = '';
+            
+            if (currentModules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-module" onclick="showAddModuleModal()">
+                        <div class="empty-module-icon">📦</div>
+                        <div>点击这里添加第一个模块</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentModules.forEach(module => {
+                container.appendChild(createModuleElement(module));
+            });
+            
+            // 初始化拖拽排序（在编辑模式下）
+            if (isEditMode) {
+                initDragAndDrop();
+            }
+        }
+        
+        // 创建单个模块的DOM元素
+        function createModuleElement(module) {
+            const moduleDiv = document.createElement('div');
+            moduleDiv.className = 'module';
+            moduleDiv.id = module.id;
+            moduleDiv.dataset.moduleId = module.id;
+            
+            // 设置模块颜色
+            moduleDiv.style.borderTop = `4px solid ${module.color}`;
+            
+            // 工具项目HTML
+            let toolsHtml = '';
+            if (module.tools && module.tools.length > 0) {
+                module.tools.forEach(tool => {
+                    toolsHtml += `
+                        <a href="${tool.url}" target="_blank" class="tool-item">
+                            <div class="tool-icon">
+                                ${tool.icon.startsWith('http') ? 
+                                    `<img src="${tool.icon}" alt="${tool.name}" onerror="this.style.display='none';this.parentElement.innerHTML='${tool.name.charAt(0)}';">` : 
+                                    tool.icon}
+                            </div>
+                            <div class="tool-info">
+                                <div class="tool-name">${tool.name}</div>
+                                <div class="tool-desc">${tool.desc}</div>
+                            </div>
+                        </a>
+                    `;
+                });
+            } else {
+                toolsHtml = `
+                    <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
+                        <div>暂无工具</div>
+                        <button class="btn" onclick="addToolToModule('${module.id}')" style="margin-top: 15px;">
+                            添加工具
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // 完整模块HTML
+            moduleDiv.innerHTML = `
+                <div class="module-header">
+                    <div class="module-title">
+                        <span class="module-title-icon">${module.icon}</span>
+                        <span>${module.name}</span>
+                        ${module.description ? `<small style="color: #7f8c8d; font-weight: normal;">- ${module.description}</small>` : ''}
+                    </div>
+                    <div class="module-controls">
+                        <button class="control-btn" onclick="editModule('${module.id}')" title="编辑模块">✏️</button>
+                        <button class="control-btn" onclick="addToolToModule('${module.id}')" title="添加工具">➕</button>
+                        <button class="control-btn" onclick="deleteModule('${module.id}')" title="删除模块">🗑️</button>
+                    </div>
+                </div>
+                <div class="module-content ${module.layout}">
+                    ${toolsHtml}
+                </div>
+            `;
+            
+            return moduleDiv;
+        }
+        
+        // 切换编辑模式
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.body.classList.toggle('edit-mode', isEditMode);
+            
+            const editIcon = document.getElementById('editIcon');
+            const editText = document.getElementById('editText');
+            const modeIndicator = document.getElementById('modeIndicator');
+            
+            if (isEditMode) {
+                editIcon.textContent = '🔒';
+                editText.textContent = '退出编辑';
+                modeIndicator.innerHTML = '✏️ 编辑模式 - 可拖拽调整顺序';
+                initDragAndDrop();
+            } else {
+                editIcon.textContent = '✏️';
+                editText.textContent = '进入编辑模式';
+                modeIndicator.innerHTML = '🔒 浏览模式';
+                destroyDragAndDrop();
+            }
+        }
+        
+        // 初始化拖拽排序
+        function initDragAndDrop() {
+            const container = document.getElementById('modulesContainer');
+            const modules = container.querySelectorAll('.module');
+            
+            modules.forEach(module => {
+                module.draggable = true;
+                
+                module.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', module.id);
+                    module.classList.add('dragging');
+                });
+                
+                module.addEventListener('dragend', () => {
+                    module.classList.remove('dragging');
+                    updateModuleOrder();
+                });
+            });
+            
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingModule = document.querySelector('.dragging');
+                const siblings = [...container.querySelectorAll('.module:not(.dragging)')];
+                
+                const nextSibling = siblings.find(sibling => {
+                    const rect = sibling.getBoundingClientRect();
+                    return e.clientY <= rect.top + rect.height / 2;
+                });
+                
+                container.insertBefore(draggingModule, nextSibling);
+            });
+        }
+        
+        // 销毁拖拽功能
+        function destroyDragAndDrop() {
+            const modules = document.querySelectorAll('.module');
+            modules.forEach(module => {
+                module.draggable = false;
+                module.classList.remove('dragging');
+            });
+        }
+        
+        // 更新模块顺序
+        function updateModuleOrder() {
+            const container = document.getElementById('modulesContainer');
+            const moduleElements = container.querySelectorAll('.module');
+            const newOrder = [];
+            
+            moduleElements.forEach(element => {
+                const moduleId = element.dataset.moduleId;
+                const module = currentModules.find(m => m.id === moduleId);
+                if (module) newOrder.push(module);
+            });
+            
+            currentModules = newOrder;
+            saveModules();
+        }
+        
+        // 显示添加模块模态框
+        function showAddModuleModal() {
+            document.getElementById('addModuleModal').style.display = 'flex';
+            document.getElementById('moduleName').focus();
+        }
+        
+        // 关闭添加模块模态框
+        function closeAddModuleModal() {
+            document.getElementById('addModuleModal').style.display = 'none';
+            // 清空表单
+            document.getElementById('moduleName').value = '';
+            document.getElementById('moduleDescription').value = '';
+        }
+        
+        // 创建新模块
+        function createNewModule() {
+            const name = document.getElementById('moduleName').value.trim();
+            const icon = document.getElementById('moduleIcon').value;
+            const layout = document.getElementById('moduleLayout').value;
+            const color = document.getElementById('moduleColor').value;
+            const description = document.getElementById('moduleDescription').value.trim();
+            
+            if (!name) {
+                alert('请输入模块名称');
+                return;
+            }
+            
+            const newModule = {
+                id: 'module-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                name: name,
+                icon: icon,
+                layout: layout,
+                color: color,
+                description: description,
+                tools: []
+            };
+            
+            currentModules.push(newModule);
+            saveModules();
+            renderModules();
+            updateTargetModuleSelect();
+            closeAddModuleModal();
+            
+            // 如果是第一个模块，自动进入编辑模式
+            if (currentModules.length === 1 && !isEditMode) {
+                toggleEditMode();
+            }
+        }
+        
+        // 显示添加工具模态框
+        function showAddToolModal() {
+            updateTargetModuleSelect();
+            document.getElementById('addToolModal').style.display = 'flex';
+            document.getElementById('toolName').focus();
+        }
+        
+        // 关闭添加工具模态框
+        function closeAddToolModal() {
+            document.getElementById('addToolModal').style.display = 'none';
+            // 清空表单
+            document.getElementById('toolName').value = '';
+            document.getElementById('toolUrl').value = '';
+            document.getElementById('toolIcon').value = '';
+            document.getElementById('toolDescription').value = '';
+        }
+        
+        // 更新目标模块选择框
+        function updateTargetModuleSelect() {
+            const select = document.getElementById('targetModule');
+            select.innerHTML = '';
+            
+            currentModules.forEach(module => {
+                const option = document.createElement('option');
+                option.value = module.id;
+                option.textContent = `${module.icon} ${module.name}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // 添加新工具
+        function addNewTool() {
+            const moduleId = document.getElementById('targetModule').value;
+            const name = document.getElementById('toolName').value.trim();
+            const url = document.getElementById('toolUrl').value.trim();
+            const icon = document.getElementById('toolIcon').value.trim() || '🔗';
+            const desc = document.getElementById('toolDescription').value.trim();
+            
+            if (!name || !url) {
+                alert('请填写工具名称和网址');
+                return;
+            }
+            
+            // 验证URL格式
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('网址格式不正确，请以 http:// 或 https:// 开头');
+                return;
+            }
+            
+            const module = currentModules.find(m => m.id === moduleId);
+            if (module) {
+                module.tools.push({
+                    name: name,
+                    url: url,
+                    icon: icon,
+                    desc: desc
+                });
+                
+                saveModules();
+                renderModules();
+                closeAddToolModal();
+            }
+        }
+        
+        // 添加工具到指定模块（快捷方式）
+        function addToolToModule(moduleId) {
+            updateTargetModuleSelect();
+            document.getElementById('targetModule').value = moduleId;
+            showAddToolModal();
+        }
+        
+        // 编辑模块
+        function editModule(moduleId) {
+            currentEditingModuleId = moduleId;
+            const module = currentModules.find(m => m.id === moduleId);
+            
+            if (!module) return;
+            
+            document.getElementById('editModuleContent').innerHTML = `
+                <div class="form-group">
+                    <label>模块名称</label>
+                    <input type="text" id="editModuleName" value="${module.name}">
+                </div>
+                
+                <div class="form-group">
+                    <label>模块图标</label>
+                    <select id="editModuleIcon">
+                        <option value="🔬" ${module.icon === '🔬' ? 'selected' : ''}>🔬 科研</option>
+                        <option value="🌐" ${module.icon === '🌐' ? 'selected' : ''}>🌐 网络</option>
+                        <option value="📚" ${module.icon === '📚' ? 'selected' : ''}>📚 学术</option>
+                        <option value="💼" ${module.icon === '💼' ? 'selected' : ''}>💼 办公</option>
+                        <option value="🎮" ${module.icon === '🎮' ? 'selected' : ''}>🎮 娱乐</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>布局样式</label>
+                    <select id="editModuleLayout">
+                        <option value="grid-layout" ${module.layout === 'grid-layout' ? 'selected' : ''}>网格布局</option>
+                        <option value="list-layout" ${module.layout === 'list-layout' ? 'selected' : ''}>列表布局</option>
+                        <option value="card-layout" ${module.layout === 'card-layout' ? 'selected' : ''}>卡片布局</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>主题颜色</label>
+                    <input type="color" id="editModuleColor" value="${module.color}">
+                </div>
+                
+                <div class="form-group">
+                    <label>模块描述</label>
+                    <textarea id="editModuleDescription" rows="3">${module.description || ''}</textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn" onclick="saveModuleEdit()" style="flex: 1;">
+                        保存更改
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeEditModuleModal()" style="flex: 1;">
+                        取消
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('editModuleModal').style.display = 'flex';
+        }
+        
+        // 保存模块编辑
+        function saveModuleEdit() {
+            const module = currentModules.find(m => m.id === currentEditingModuleId);
+            
+            if (module) {
+                module.name = document.getElementById('editModuleName').value.trim();
+                module.icon = document.getElementById('editModuleIcon').value;
+                module.layout = document.getElementById('editModuleLayout').value;
+                module.color = document.getElementById('editModuleColor').value;
+                module.description = document.getElementById('editModuleDescription').value.trim();
+                
+                saveModules();
+                renderModules();
+                closeEditModuleModal();
+            }
+        }
+        
+        // 关闭编辑模块模态框
+        function closeEditModuleModal() {
+            document.getElementById('editModuleModal').style.display = 'none';
+            currentEditingModuleId = null;
+        }
+        
+        // 删除模块
+        function deleteModule(moduleId) {
+            if (!confirm('确定要删除这个模块吗？模块内的所有工具也会被删除。')) {
+                return;
+            }
+            
+            currentModules = currentModules.filter(m => m.id !== moduleId);
+            saveModules();
+            renderModules();
+            updateTargetModuleSelect();
+        }
+        
+        // 导出配置
+        function exportConfig() {
+            const config = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                modules: currentModules
+            };
+            
+            const dataStr = JSON.stringify(config, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `toolbox-config-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // 导入配置
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const config = JSON.parse(event.target.result);
+                        
+                        if (!config.modules || !Array.isArray(config.modules)) {
+                            throw new Error('配置文件格式不正确');
+                        }
+                        
+                        if (confirm(`将导入 ${config.modules.length} 个模块。这会覆盖当前配置，确定吗？`)) {
+                            currentModules = config.modules;
+                            saveModules();
+                            renderModules();
+                            updateTargetModuleSelect();
+                            alert('配置导入成功！');
+                        }
+                    } catch (error) {
+                        alert('导入失败：' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+    </script>
+</body>
+</html>
