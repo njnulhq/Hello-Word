@@ -3,8 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义工具箱（支持工具拖拽）</title>
+    <title>自定义智能工具箱 - 完整版</title>
     <style>
+        :root {
+            --bg-image: none;
+            --bg-overlay: rgba(255, 255, 255, 0.85);
+            --bg-color: #ffffff;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -13,36 +19,296 @@
         
         body {
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
             color: #333;
             line-height: 1.6;
             padding: 20px;
             min-height: 100vh;
+            position: relative;
+            padding-top: 40px; /* 为背景图片留白 */
+        }
+        
+        /* 右上角时间显示 */
+        .global-time-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            text-align: center;
+            color: #2c3e50;
+            font-family: 'Segoe UI', monospace;
+            background: none;
+            padding: 0;
+        }
+        
+        .global-date {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .global-time {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 1px;
+        }
+        
+        /* 背景图片层 */
+        .page-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: var(--bg-color) var(--bg-image) center/cover no-repeat;
+        }
+        
+        .page-background::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(3px);
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
-        header {
-            text-align: center;
-            padding: 30px 20px;
-            margin-bottom: 30px;
+        /* 站内搜索功能 */
+        .search-container {
             background: white;
+            padding: 15px;
             border-radius: 15px;
+            margin-bottom: 20px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         
-        h1 {
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .search-btn {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .search-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .search-results {
+            background: white;
+            border-radius: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .search-result-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-result-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .search-result-info {
+            flex: 1;
+        }
+        
+        .search-result-name {
+            font-weight: 600;
+            font-size: 14px;
             color: #2c3e50;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
         }
         
-        .subtitle {
+        .search-result-desc {
+            font-size: 12px;
             color: #7f8c8d;
+            margin-top: 4px;
+        }
+        
+        .search-result-module {
+            font-size: 12px;
+            color: #95a5a6;
+            background: #f0f2f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        
+        .no-results {
+            padding: 30px;
+            text-align: center;
+            color: #95a5a6;
+        }
+        
+        /* 关于本站按钮 */
+        .about-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .about-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* 介绍栏样式 - 可设置背景色和透明度 */
+        .introduction-panel {
+            background: rgba(102, 126, 234, 0.9); /* 默认颜色，可编辑 */
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px; /* 向下移动 */
+        }
+        
+        .introduction-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .introduction-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            flex-direction: column;
+        }
+        
+        .introduction-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .introduction-content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .introduction-content {
             font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .introduction-edit-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            margin: 5px 0;
+        }
+        
+        .introduction-edit-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .introduction-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
         }
         
         /* 控制面板 */
@@ -50,8 +316,8 @@
             background: white;
             padding: 20px;
             border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
@@ -94,6 +360,22 @@
             background: #219653;
         }
         
+        .btn-bg {
+            background: #9b59b6;
+        }
+        
+        .btn-bg:hover {
+            background: #8e44ad;
+        }
+        
+        .btn-intro-bg {
+            background: #bdc3c7;
+        }
+        
+        .btn-intro-bg:hover {
+            background: #c0392b;
+        }
+        
         .mode-indicator {
             margin-left: auto;
             padding: 8px 16px;
@@ -104,32 +386,52 @@
             border: 1px solid #e9ecef;
         }
         
-        .edit-mode .module {
-            border: 2px dashed #3498db;
-            position: relative;
-        }
-        
-        /* 模块网格容器 */
+        /* 模块容器 - 改为横向排列 */
         .modules-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 25px;
             margin-bottom: 50px;
         }
         
-        /* 单个模块样式 */
+        /* 模块样式 - 每行一个 */
         .module {
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
             transition: all 0.3s;
             position: relative;
+            overflow: hidden;
+            cursor: move;
+            width: 100%;
+        }
+        
+        .module::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--module-color, #3498db), transparent);
+        }
+        
+        .edit-mode .module {
+            border: 2px dashed #3498db;
         }
         
         .module:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        
+        /* 模块拖拽时的样式 */
+        .module.dragging {
+            opacity: 0.8;
+            transform: rotate(2deg) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
         }
         
         /* 模块头部 */
@@ -178,9 +480,10 @@
             background: #e9ecef;
         }
         
-        /* 模块内容区 - 不同类型的布局 */
+        /* 模块内容区 */
         .module-content {
             min-height: 100px;
+            position: relative;
         }
         
         .module-content.grid-layout {
@@ -197,163 +500,166 @@
         
         .module-content.card-layout {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
         }
-        
-        /* 工具项目样式 - 增强版 */
+
+        /* 工具项目样式 - 统一调整为小型卡片样式 */
         .tool-item {
             background: #f8f9fa;
             border-radius: 10px;
-            padding: 15px;
+            padding: 15px 12px;
             text-decoration: none;
             color: #333;
             transition: all 0.2s;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             position: relative;
             cursor: pointer;
+            border: 1px solid transparent;
+            text-align: center;
+            min-height: 100px;
+            justify-content: space-between;
         }
-        
+
         .tool-item:hover {
             background: #e9ecef;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            border-color: #3498db;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
         }
-        
+
+        /* 工具图标容器 - 在顶部居中，尺寸调小 */
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #3498db;
+            flex-shrink: 0;
+            overflow: hidden;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            margin-bottom: 6px;
+        }
+
+        .tool-icon img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* 工具信息 - 文字在图标下方居中 */
+        .tool-info {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+        }
+
+        .tool-desc {
+            font-size: 11px;
+            color: #7f8c8d;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            width: 100%;
+            text-align: center;
+        }
+
+        .card-layout .tool-info {
+            text-align: center;
+            width: 100%;
+        }
+
         /* 编辑模式下工具项的样式 */
         .edit-mode .tool-item {
-            cursor: move; /* 显示可拖拽光标 */
+            cursor: move;
         }
-        
-        .edit-mode .tool-item:hover {
-            background: #e3f2fd;
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-        }
-        
-        /* 拖拽时的样式 */
-        .tool-item.tool-dragging {
-            opacity: 0.5;
-            transform: rotate(3deg);
+
+        .edit-mode .tool-dragging {
+            opacity: 0.7;
+            transform: rotate(3deg) scale(1.02);
             background: #bbdefb;
-            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
-        
-        /* 工具项中的删除按钮 */
-        .tool-delete-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            display: none; /* 默认隐藏 */
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            transition: all 0.2s;
-        }
-        
-        .edit-mode .tool-item:hover .tool-delete-btn {
-            display: flex;
-        }
-        
-        .tool-delete-btn:hover {
-            background: #c0392b;
-            transform: scale(1.1);
-        }
-        
+
         /* 工具项拖拽占位指示器 */
         .tool-placeholder {
             border: 2px dashed #3498db;
             background: rgba(52, 152, 219, 0.05);
             border-radius: 10px;
-            height: 70px;
+            height: 100px;
         }
-        
-        .list-layout .tool-item {
-            flex-direction: row;
-            justify-content: flex-start;
+
+        /* 工具项中的控制按钮 */
+        .tool-controls {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        
-        .card-layout .tool-item {
-            flex-direction: column;
-            text-align: center;
-            justify-content: center;
-            height: 120px;
+
+        .edit-mode .tool-item:hover .tool-controls {
+            opacity: 1;
         }
-        
-        .tool-icon {
-            width: 40px;
-            height: 40px;
+
+        .tool-edit-btn,
+        .tool-delete-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            border-radius: 10px;
-            font-size: 20px;
-            color: #3498db;
-            flex-shrink: 0;
+            transition: all 0.2s;
         }
-        
-        .tool-icon img {
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
+
+        .tool-edit-btn:hover {
+            background: #2980b9;
+            transform: scale(1.1);
         }
-        
-        .tool-info {
-            flex: 1;
-            min-width: 0; /* 防止内容溢出 */
+
+        .tool-delete-btn {
+            background: #e74c3c;
         }
-        
-        .tool-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .tool-desc {
-            font-size: 12px;
-            color: #7f8c8d;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .card-layout .tool-info {
-            text-align: center;
-        }
-        
-        /* 模块编辑模式下的拖拽手柄 */
-        .edit-mode .module::before {
-            content: '⋮⋮';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #95a5a6;
-            cursor: move;
-            font-size: 18px;
-            z-index: 10;
-        }
-        
-        /* 编辑模式下工具项的手柄 */
-        .edit-mode .tool-item::after {
-            content: '⋮⋮';
-            position: absolute;
-            left: 5px;
-            color: #95a5a6;
-            font-size: 16px;
-            opacity: 0.6;
+
+        .tool-delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
         }
         
         /* 空模块样式 */
@@ -369,6 +675,7 @@
             color: #6c757d;
             cursor: pointer;
             transition: all 0.3s;
+            width: 100%;
         }
         
         .empty-module:hover {
@@ -391,7 +698,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            z-index: 2000;
             align-items: center;
             justify-content: center;
         }
@@ -401,9 +708,21 @@
             border-radius: 15px;
             padding: 30px;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .modal-header {
@@ -457,15 +776,141 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
         
+        .bg-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 10px;
+            margin: 15px 0;
+            background: var(--preview-bg, #f0f0f0) center/cover no-repeat;
+            border: 2px dashed #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        
+        .color-preview {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+        }
+        
+        /* 文件上传样式 */
+        .file-upload-container {
+            margin-top: 10px;
+        }
+        
+        .file-upload-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+        
+        .file-upload-btn:hover {
+            background: #2980b9;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* 背景类型选择器 */
+        .bg-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .bg-type-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .bg-type-btn.active {
+            border-color: #3498db;
+            background: #ebf5fb;
+        }
+        
+        /* 编辑模式下的拖拽手柄 */
+        .edit-mode .module::after {
+            content: '⋮⋮';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #95a5a6;
+            cursor: move;
+            font-size: 18px;
+            z-index: 10;
+        }
+        
+        /* 关于本站模态框样式 */
+        .about-content {
+            line-height: 1.8;
+        }
+        
+        .about-section {
+            margin-bottom: 20px;
+        }
+        
+        .about-section h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .about-section p {
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .features-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features-list li {
+            padding: 5px 0;
+            color: #555;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .features-list li:before {
+            content: '✓';
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .modules-container {
                 grid-template-columns: 1fr;
             }
             
-            .module-content.grid-layout,
-            .module-content.card-layout {
-                grid-template-columns: repeat(2, 1fr);
+            .introduction-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .introduction-content-container {
+                flex-direction: column;
             }
             
             .control-panel {
@@ -477,36 +922,88 @@
                 margin-left: 0;
                 text-align: center;
             }
-        }
-        
-        @media (max-width: 480px) {
-            .module-content.grid-layout,
-            .module-content.card-layout {
-                grid-template-columns: 1fr;
+            
+            .bg-type-selector {
+                flex-direction: column;
             }
             
-            .btn {
+            .global-time-display {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 20px;
+                text-align: center;
+                width: 100%;
+            }
+            
+            .global-time {
+                font-size: 24px;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .search-btn {
                 width: 100%;
                 justify-content: center;
             }
             
-            .tool-delete-btn {
-                display: flex !important; /* 在小屏幕上始终显示删除按钮 */
-                top: 5px;
-                right: 5px;
-                width: 20px;
-                height: 20px;
-                font-size: 14px;
+            .about-btn {
+                bottom: 10px;
+                right: 10px;
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+            
+            .module-content.card-layout {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
         }
     </style>
 </head>
 <body>
+    <!-- 全局时间显示 - 右上角 -->
+    <div class="global-time-display">
+        <div class="global-date" id="globalCurrentDate">2026年1月28日 星期三</div>
+        <div class="global-time" id="globalCurrentTime">16:01</div>
+    </div>
+    
+    <!-- 关于本站按钮 -->
+    <button class="about-btn" onclick="showAboutModal()">ℹ️ 关于本站</button>
+    
+    <!-- 背景图片层 -->
+    <div class="page-background" id="pageBackground"></div>
+    
     <div class="container">
-        <header>
-            <h1>🔧 自定义智能工具箱</h1>
-            <p class="subtitle">拖拽调整 | 自定义模块 | 一键保存 | 多设备同步</p>
-        </header>
+        <!-- 介绍栏 -->
+        <div class="introduction-panel" id="introductionPanel">
+            <div class="introduction-header">
+                <div class="introduction-title" id="introTitle">🌟 我的智能工具箱</div>
+                <div class="introduction-content-container">
+                    <div class="introduction-content" id="introContent">
+                        这是一个完全自定义的工具箱，您可以自由添加、删除和拖拽排序各类工具。将您最常用的网站和工具集中在这里，提高工作和学习效率！
+                    </div>
+                    <div class="introduction-controls">
+                        <button class="introduction-edit-btn" onclick="showIntroductionModal()">编辑介绍</button>
+                        <button class="introduction-edit-btn btn-intro-bg" onclick="showIntroductionBackgroundModal()">设置模块背景</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 站内搜索功能 -->
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 搜索工具名称或描述..." onkeyup="handleSearchInput(event)">
+            <button class="search-btn" onclick="performSearch()">
+                <span>搜索</span>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
         
         <!-- 控制面板 -->
         <div class="control-panel">
@@ -515,15 +1012,19 @@
                 <span id="editText">进入编辑模式</span>
             </button>
             
+            <button class="btn btn-bg" onclick="showBackgroundModal()">
+                🖼️ 设置网页背景
+            </button>
+            
             <button class="btn btn-success" onclick="showAddModuleModal()">
                 ➕ 添加新模块
             </button>
             
             <button class="btn btn-secondary" onclick="showAddToolModal()">
-                🔧 添加工具到模块
+                🔧 添加工具
             </button>
             
-            <button class="btn btn-secondary" onclick="exportConfig()">
+            <button class="btn btn-secondary" onclick="showExportHelp()">
                 💾 导出配置
             </button>
             
@@ -536,180 +1037,889 @@
             </div>
         </div>
         
-        <!-- 模块容器 -->
+        <!-- 模块容器 - 改为横向排列 -->
         <div class="modules-container" id="modulesContainer">
             <!-- 模块会在这里动态生成 -->
-            <div class="empty-module" onclick="showAddModuleModal()">
-                <div class="empty-module-icon">📦</div>
-                <div>点击这里添加第一个模块</div>
-                <div style="font-size: 14px; margin-top: 10px;">或使用上方的"添加新模块"按钮</div>
-            </div>
         </div>
-        
-        <!-- 添加模块模态框 -->
-        <div class="modal" id="addModuleModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">➕ 创建新模块</div>
-                    <button class="close-modal" onclick="closeAddModuleModal()">×</button>
+    </div>
+    
+    <!-- 关于本站模态框 -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📚 关于本站</div>
+                <button class="close-modal" onclick="closeAboutModal()">×</button>
+            </div>
+            
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>🌟 网站简介</h3>
+                    <p>这是一个完全自定义的智能工具箱，旨在帮助用户集中管理常用的网站和在线工具，提高工作和学习效率。</p>
                 </div>
                 
-                <div class="form-group">
-                    <label for="moduleName">模块名称</label>
-                    <input type="text" id="moduleName" placeholder="例如：科研工具、常用网站">
+                <div class="about-section">
+                    <h3>✨ 特色功能</h3>
+                    <ul class="features-list">
+                        <li>完全自定义的工具箱布局和样式</li>
+                        <li>拖拽排序模块和工具项</li>
+                        <li>多种模块布局选择（网格、列表、卡片）</li>
+                        <li>自定义背景图片和颜色</li>
+                        <li>工具搜索功能</li>
+                        <li>配置导入导出</li>
+                        <li>实时时间显示</li>
+                        <li>响应式设计，适配各种设备</li>
+                        <li>工具编辑和删除功能</li>
+                        <li>模块背景自定义</li>
+                    </ul>
                 </div>
                 
-                <div class="form-group">
-                    <label for="moduleIcon">模块图标</label>
-                    <select id="moduleIcon">
-                        <option value="🔬">🔬 科研</option>
-                        <option value="🌐">🌐 网络</option>
-                        <option value="📚">📚 学术</option>
-                        <option value="💼">💼 办公</option>
-                        <option value="🎮">🎮 娱乐</option>
-                        <option value="🛠️">🛠️ 工具</option>
-                        <option value="📊">📊 数据</option>
-                        <option value="🎨">🎨 设计</option>
-                        <option value="💻">💻 编程</option>
-                        <option value="📱">📱 移动</option>
-                    </select>
+                <div class="about-section">
+                    <h3>👨‍💻 作者信息</h3>
+                    <p>本工具由池州学院教师刘怀庆，利用 AI 助手协助开发，致力于为用户提供简洁高效的工具管理解决方案。</p>
+                    <p>版本：v4.1</p>
+                    <p>更新日期：2026年1月28日</p>
                 </div>
                 
-                <div class="form-group">
-                    <label for="moduleLayout">布局样式</label>
-                    <select id="moduleLayout">
-                        <option value="grid-layout">网格布局（适合大量工具）</option>
-                        <option value="list-layout">列表布局（适合详细展示）</option>
-                        <option value="card-layout">卡片布局（美观简洁）</option>
-                    </select>
+                <div class="about-section">
+                    <h3>💡 使用提示</h3>
+                    <p>1. 进入编辑模式后，可以拖拽排序模块和工具</p>
+                    <p>2. 右键点击工具可以快速编辑或删除</p>
+                    <p>3. 使用搜索功能快速找到需要的工具</p>
+                    <p>4. 定期导出配置以防数据丢失</p>
                 </div>
+            </div>
+            
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="closeAboutModal()">
+                关闭
+            </button>
+        </div>
+    </div>
+    
+    <!-- 导出配置提示模态框 -->
+    <div class="modal" id="exportHelpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">💾 导出配置说明</div>
+                <button class="close-modal" onclick="closeExportHelpModal()">×</button>
+            </div>
+            
+            <div style="line-height: 1.7;">
+                <p><strong>功能说明：</strong>导出当前工具箱的所有配置到本地文件。</p>
                 
-                <div class="form-group">
-                    <label for="moduleColor">主题颜色</label>
-                    <input type="color" id="moduleColor" value="#3498db">
-                </div>
+                <p><strong>导出的内容包括：</strong></p>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li>介绍栏的标题和内容</li>
+                    <li>介绍栏的背景设置</li>
+                    <li>页面背景图片/颜色设置</li>
+                    <li>所有模块的设置和排序</li>
+                    <li>所有工具的配置信息</li>
+                </ul>
                 
-                <div class="form-group">
-                    <label for="moduleDescription">模块描述（可选）</label>
-                    <textarea id="moduleDescription" rows="3" placeholder="简要描述这个模块的用途"></textarea>
-                </div>
+                <p><strong>使用场景：</strong></p>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li>备份当前配置以防数据丢失</li>
+                    <li>在多台设备间同步配置</li>
+                    <li>分享配置给其他用户</li>
+                    <li>升级前进行数据备份</li>
+                </ul>
                 
-                <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="createNewModule()">
-                    创建模块
+                <p><strong>注意事项：</strong></p>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li>导出的文件是JSON格式，请不要手动修改</li>
+                    <li>建议定期导出配置进行备份</li>
+                    <li>导入配置会覆盖当前所有设置，请谨慎操作</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="confirmExport()" style="flex: 2;">
+                    ✅ 确认导出配置
+                </button>
+                <button class="btn btn-secondary" onclick="closeExportHelpModal()" style="flex: 1;">
+                    取消
                 </button>
             </div>
         </div>
-        
-        <!-- 添加工具模态框 -->
-        <div class="modal" id="addToolModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">🔧 添加新工具</div>
-                    <button class="close-modal" onclick="closeAddToolModal()">×</button>
+    </div>
+    
+    <!-- 编辑介绍模态框 -->
+    <div class="modal" id="introductionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📝 编辑介绍</div>
+                <button class="close-modal" onclick="closeIntroductionModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="introTitleInput">标题</label>
+                <input type="text" id="introTitleInput" placeholder="请输入介绍标题">
+            </div>
+            
+            <div class="form-group">
+                <label for="introContentInput">内容</label>
+                <textarea id="introContentInput" rows="5" placeholder="请输入介绍内容..."></textarea>
+            </div>
+            
+            <button class="btn" style="width: 100%;" onclick="saveIntroduction()">
+                保存更改
+            </button>
+        </div>
+    </div>
+    
+    <!-- 介绍栏背景设置模态框 -->
+    <div class="modal" id="introductionBackgroundModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🎨 设置介绍栏背景</div>
+                <button class="close-modal" onclick="closeIntroductionBackgroundModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="introBgColor">背景颜色</label>
+                <input type="color" id="introBgColor" value="#667eea">
+            </div>
+            
+            <div class="form-group">
+                <label for="introBgOpacity">背景透明度</label>
+                <input type="range" id="introBgOpacity" min="0" max="100" value="90">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                    <span>透明</span>
+                    <span id="introOpacityValue">90%</span>
+                    <span>不透明</span>
                 </div>
-                
+                <small style="color: #7f8c8d;">调节透明度可以看到后面的页面背景</small>
+            </div>
+            
+            <div class="color-preview" id="introBgPreview" style="background: rgba(102, 126, 234, 0.9);"></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="saveIntroductionBackground()" style="flex: 1;">
+                    应用背景
+                </button>
+                <button class="btn btn-secondary" onclick="resetIntroductionBackground()" style="flex: 1;">
+                    重置背景
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 背景设置模态框 -->
+    <div class="modal" id="backgroundModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🖼️ 设置页面背景</div>
+                <button class="close-modal" onclick="closeBackgroundModal()">×</button>
+            </div>
+            
+            <div class="bg-type-selector">
+                <div class="bg-type-btn active" id="bgTypeImage" onclick="selectBgType('image')">
+                    图片背景
+                </div>
+                <div class="bg-type-btn" id="bgTypeColor" onclick="selectBgType('color')">
+                    纯色背景
+                </div>
+            </div>
+            
+            <!-- 图片背景设置 -->
+            <div id="imageBgSettings">
                 <div class="form-group">
-                    <label for="targetModule">添加到哪个模块？</label>
-                    <select id="targetModule">
-                        <!-- 模块选项会动态生成 -->
-                    </select>
+                    <label for="bgImageUrl">背景图片URL或上传文件</label>
+                    <input type="url" id="bgImageUrl" placeholder="输入图片链接，或上传本地文件">
+                    
+                    <div class="file-upload-container">
+                        <label class="file-upload-btn">
+                            📁 选择本地图片
+                            <input type="file" id="bgImageFile" accept=".jpg,.jpeg,.png,.gif,.tiff,.tif,.webp" style="display: none;" onchange="handleImageUpload(this)">
+                        </label>
+                        <div id="imageFileName" class="file-name"></div>
+                        <small style="color: #7f8c8d;">支持 .jpg, .png, .gif, .tiff, .webp 格式</small>
+                    </div>
                 </div>
                 
+                <div class="bg-preview" id="bgPreview">
+                    背景预览
+                </div>
+            </div>
+            
+            <!-- 纯色背景设置 -->
+            <div id="colorBgSettings" style="display: none;">
                 <div class="form-group">
-                    <label for="toolName">工具名称</label>
-                    <input type="text" id="toolName" placeholder="例如：Google Earth Engine">
+                    <label for="bgColorPicker">选择背景颜色</label>
+                    <input type="color" id="bgColorPicker" value="#ffffff">
                 </div>
                 
-                <div class="form-group">
-                    <label for="toolUrl">工具网址</label>
-                    <input type="url" id="toolUrl" placeholder="https://example.com">
+                <div class="color-preview" id="colorPreview" style="background: #ffffff;"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="bgOverlay">背景遮罩透明度</label>
+                <input type="range" id="bgOverlay" min="0" max="100" value="15">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                    <span>透明</span>
+                    <span id="overlayValue">15%</span>
+                    <span>不透明</span>
                 </div>
-                
-                <div class="form-group">
-                    <label for="toolIcon">工具图标（可选）</label>
-                    <input type="text" id="toolIcon" placeholder="输入图标URL或Emoji，例如：🌐 或 https://example.com/icon.png">
-                    <small style="color: #7f8c8d;">提示：可以输入emoji表情或图片链接</small>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="saveBackground()" style="flex: 1;">
+                    应用背景
+                </button>
+                <button class="btn btn-secondary" onclick="resetBackground()" style="flex: 1;">
+                    重置背景
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加模块模态框 -->
+    <div class="modal" id="addModuleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">➕ 创建新模块</div>
+                <button class="close-modal" onclick="closeAddModuleModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="moduleName">模块名称</label>
+                <input type="text" id="moduleName" placeholder="例如：科研工具、常用网站">
+            </div>
+            
+            <div class="form-group">
+                <label for="moduleIcon">模块图标</label>
+                <select id="moduleIcon">
+                    <option value="🔬">🔬 科研</option>
+                    <option value="🌐">🌐 网络</option>
+                    <option value="📚">📚 学术</option>
+                    <option value="💼">💼 办公</option>
+                    <option value="🎮">🎮 娱乐</option>
+                    <option value="🛠️">🛠️ 工具</option>
+                    <option value="📊">📊 数据</option>
+                    <option value="🎨">🎨 设计</option>
+                    <option value="💻">💻 编程</option>
+                    <option value="📱">📱 移动</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="moduleLayout">布局样式</label>
+                <select id="moduleLayout">
+                    <option value="grid-layout">网格布局（适合大量工具）</option>
+                    <option value="list-layout">列表布局（适合详细展示）</option>
+                    <option value="card-layout">卡片布局（美观简洁）</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="moduleColor">主题颜色</label>
+                <input type="color" id="moduleColor" value="#3498db">
+            </div>
+            
+            <div class="form-group">
+                <label for="moduleDescription">模块描述（可选）</label>
+                <textarea id="moduleDescription" rows="3" placeholder="简要描述这个模块的用途"></textarea>
+            </div>
+            
+            <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="createNewModule()">
+                创建模块
+            </button>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑工具模态框 -->
+    <div class="modal" id="addToolModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="toolModalTitle">🔧 添加新工具</div>
+                <button class="close-modal" onclick="closeAddToolModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="targetModule">添加到哪个模块？</label>
+                <select id="targetModule">
+                    <!-- 模块选项会动态生成 -->
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="toolName">工具名称</label>
+                <input type="text" id="toolName" placeholder="例如：Google Earth Engine">
+            </div>
+            
+            <div class="form-group">
+                <label for="toolUrl">工具网址</label>
+                <input type="url" id="toolUrl" placeholder="https://example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="toolIcon">工具图标</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="toolIcon" placeholder="输入Emoji，例如：🌐" style="flex: 1;">
+                    <label class="file-upload-btn" style="margin: 0;">
+                        📁 上传图标
+                        <input type="file" id="toolIconFile" accept=".jpg,.jpeg,.png,.gif,.tiff,.tif,.webp" style="display: none;" onchange="handleToolIconUpload(this)">
+                    </label>
                 </div>
-                
-                <div class="form-group">
-                    <label for="toolDescription">工具描述</label>
-                    <input type="text" id="toolDescription" placeholder="简要描述这个工具的功能">
-                </div>
-                
-                <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="addNewTool()">
+                <small style="color: #7f8c8d;">提示：可以输入emoji表情或上传图片</small>
+                <div id="toolIconFileName" class="file-name"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="toolDescription">工具描述</label>
+                <input type="text" id="toolDescription" placeholder="简要描述这个工具的功能">
+            </div>
+            
+            <input type="hidden" id="editingToolId" value="">
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" id="toolModalSubmitBtn" style="flex: 2;" onclick="saveTool()">
                     添加工具
                 </button>
+                <button class="btn btn-secondary" onclick="closeAddToolModal()" style="flex: 1;">
+                    取消
+                </button>
             </div>
         </div>
-        
-        <!-- 编辑模块模态框 -->
-        <div class="modal" id="editModuleModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">⚙️ 编辑模块</div>
-                    <button class="close-modal" onclick="closeEditModuleModal()">×</button>
-                </div>
-                <div id="editModuleContent">
-                    <!-- 编辑内容会动态生成 -->
-                </div>
-            </div>
-        </div>
-        
-        <footer style="text-align: center; padding: 30px; color: #7f8c8d;">
-            <p>© 2023 自定义工具箱 | 配置已自动保存到本地</p>
-            <p style="font-size: 14px; margin-top: 10px;">提示：进入编辑模式可以拖拽调整模块和工具顺序，鼠标悬停在工具上可显示删除按钮</p>
-        </footer>
     </div>
-
+    
+    <!-- 编辑模块模态框 -->
+    <div class="modal" id="editModuleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ 编辑模块</div>
+                <button class="close-modal" onclick="closeEditModuleModal()">×</button>
+            </div>
+            <div id="editModuleContent">
+                <!-- 编辑内容会动态生成 -->
+            </div>
+        </div>
+    </div>
+    
     <script>
         // 全局状态
         let isEditMode = false;
         let currentModules = [];
+        let currentDraggingModule = null;
+        let currentDraggingTool = null;
         let currentEditingModuleId = null;
+        let currentBgType = 'image';
+        let uploadedBgImage = null;
+        let uploadedToolIcon = null;
+        let timeUpdateInterval = null;
+        let editingTool = null;
+        let searchTimeout = null;
         
-        // 模块预设数据（初始状态）
-        const defaultModules = [
-            {
-                id: 'search-tools',
-                name: '搜索工具',
-                icon: '🌐',
-                layout: 'grid-layout',
-                color: '#3498db',
-                description: '各类信息检索工具',
-                tools: [
-                    { id: 'tool-1', name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
-                    { id: 'tool-2', name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
-                    { id: 'tool-3', name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
-                ]
-            },
-            {
-                id: 'research-tools',
-                name: '科研工具',
-                icon: '🔬',
-                layout: 'card-layout',
-                color: '#27ae60',
-                description: '遥感与科研相关工具',
-                tools: [
-                    { id: 'tool-4', name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
-                    { id: 'tool-5', name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
-                    { id: 'tool-6', name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
-                ]
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载所有数据
+            loadIntroduction();
+            loadIntroductionBackground();
+            loadBackground();
+            loadModules();
+            
+            // 渲染页面
+            renderModules();
+            updateTargetModuleSelect();
+            
+            // 初始化时间显示
+            updateGlobalTime();
+            timeUpdateInterval = setInterval(updateGlobalTime, 1000); // 每秒更新一次
+            
+            // 绑定事件
+            document.getElementById('bgImageUrl').addEventListener('input', updateBgPreview);
+            document.getElementById('bgOverlay').addEventListener('input', function() {
+                document.getElementById('overlayValue').textContent = this.value + '%';
+            });
+            
+            document.getElementById('introBgColor').addEventListener('input', updateIntroBgPreview);
+            document.getElementById('introBgOpacity').addEventListener('input', function() {
+                document.getElementById('introOpacityValue').textContent = this.value + '%';
+                updateIntroBgPreview();
+            });
+            
+            document.getElementById('bgColorPicker').addEventListener('input', function() {
+                document.getElementById('colorPreview').style.background = this.value;
+            });
+            
+            // 初始化拖拽
+            initModuleDragAndDrop();
+        });
+        
+        // 站内搜索功能
+        function handleSearchInput(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+                return;
             }
-        ];
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                const query = document.getElementById('searchInput').value.trim();
+                if (query.length > 0) {
+                    performSearch();
+                } else {
+                    hideSearchResults();
+                }
+            }, 300);
+        }
         
-        // 生成工具ID
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!query) {
+                hideSearchResults();
+                return;
+            }
+            
+            const results = [];
+            
+            // 在所有模块中搜索工具
+            currentModules.forEach(module => {
+                module.tools.forEach(tool => {
+                    if (tool.name.toLowerCase().includes(query) || 
+                        (tool.desc && tool.desc.toLowerCase().includes(query))) {
+                        results.push({
+                            tool: tool,
+                            module: module
+                        });
+                    }
+                });
+            });
+            
+            displaySearchResults(results);
+        }
+        
+        function displaySearchResults(results) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <div>🔍 未找到相关工具</div>
+                        <div style="font-size: 12px; margin-top: 5px;">尝试使用其他关键词搜索</div>
+                    </div>
+                `;
+            } else {
+                results.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.onclick = function() {
+                        // 跳转到对应工具
+                        window.open(result.tool.url, '_blank');
+                    };
+                    
+                    const icon = result.tool.icon.startsWith('http') || result.tool.icon.startsWith('data:image') ? 
+                        `<img src="${result.tool.icon}" alt="${result.tool.name}" style="width: 20px; height: 20px;">` : 
+                        result.tool.icon;
+                    
+                    item.innerHTML = `
+                        <div class="search-result-icon">${icon}</div>
+                        <div class="search-result-info">
+                            <div class="search-result-name">${result.tool.name}</div>
+                            <div class="search-result-desc">${result.tool.desc}</div>
+                        </div>
+                        <div class="search-result-module">${result.module.name}</div>
+                    `;
+                    
+                    resultsContainer.appendChild(item);
+                });
+            }
+            
+            resultsContainer.style.display = 'block';
+        }
+        
+        function hideSearchResults() {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        
+        // 关于本站功能
+        function showAboutModal() {
+            document.getElementById('aboutModal').style.display = 'flex';
+        }
+        
+        function closeAboutModal() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        // 导出配置提示功能
+        function showExportHelp() {
+            document.getElementById('exportHelpModal').style.display = 'flex';
+        }
+        
+        function closeExportHelpModal() {
+            document.getElementById('exportHelpModal').style.display = 'none';
+        }
+        
+        function confirmExport() {
+            closeExportHelpModal();
+            setTimeout(exportConfig, 100); // 短暂延迟后执行导出
+        }
+        
+        // 全局时间显示功能
+        function updateGlobalTime() {
+            const now = new Date();
+            
+            // 格式化日期：2026年1月28日 星期三
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const day = now.getDay();
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekday = weekdays[day];
+            
+            document.getElementById('globalCurrentDate').textContent = `${year}年${month}月${date}日 ${weekday}`;
+            
+            // 格式化时间：16:01
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            document.getElementById('globalCurrentTime').textContent = `${hours}:${minutes}`;
+        }
+        
+        // 介绍栏功能
+        function loadIntroduction() {
+            const title = localStorage.getItem('toolbox-intro-title');
+            const content = localStorage.getItem('toolbox-intro-content');
+            
+            if (title) document.getElementById('introTitle').textContent = title;
+            if (content) document.getElementById('introContent').textContent = content;
+        }
+        
+        function loadIntroductionBackground() {
+            const bgColor = localStorage.getItem('toolbox-intro-bg-color') || '#667eea';
+            const bgOpacity = localStorage.getItem('toolbox-intro-bg-opacity') || '90';
+            
+            const introPanel = document.getElementById('introductionPanel');
+            const color = hexToRgb(bgColor);
+            introPanel.style.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${bgOpacity / 100})`;
+            
+            document.getElementById('introBgColor').value = bgColor;
+            document.getElementById('introBgOpacity').value = bgOpacity;
+            document.getElementById('introOpacityValue').textContent = bgOpacity + '%';
+            
+            updateIntroBgPreview();
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : {r: 102, g: 126, b: 234}; // 默认颜色
+        }
+        
+        function updateIntroBgPreview() {
+            const color = document.getElementById('introBgColor').value;
+            const opacity = document.getElementById('introBgOpacity').value;
+            const rgb = hexToRgb(color);
+            document.getElementById('introBgPreview').style.backgroundColor = 
+                `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity / 100})`;
+        }
+        
+        function showIntroductionModal() {
+            document.getElementById('introTitleInput').value = document.getElementById('introTitle').textContent;
+            document.getElementById('introContentInput').value = document.getElementById('introContent').textContent;
+            document.getElementById('introductionModal').style.display = 'flex';
+        }
+        
+        function showIntroductionBackgroundModal() {
+            document.getElementById('introductionBackgroundModal').style.display = 'flex';
+        }
+        
+        function closeIntroductionModal() {
+            document.getElementById('introductionModal').style.display = 'none';
+        }
+        
+        function closeIntroductionBackgroundModal() {
+            document.getElementById('introductionBackgroundModal').style.display = 'none';
+        }
+        
+        function saveIntroduction() {
+            const title = document.getElementById('introTitleInput').value.trim();
+            const content = document.getElementById('introContentInput').value.trim();
+            
+            if (title) {
+                document.getElementById('introTitle').textContent = title;
+                localStorage.setItem('toolbox-intro-title', title);
+            }
+            
+            if (content) {
+                document.getElementById('introContent').textContent = content;
+                localStorage.setItem('toolbox-intro-content', content);
+            }
+            
+            closeIntroductionModal();
+        }
+        
+        function saveIntroductionBackground() {
+            const bgColor = document.getElementById('introBgColor').value;
+            const bgOpacity = document.getElementById('introBgOpacity').value;
+            
+            const introPanel = document.getElementById('introductionPanel');
+            const color = hexToRgb(bgColor);
+            introPanel.style.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${bgOpacity / 100})`;
+            
+            localStorage.setItem('toolbox-intro-bg-color', bgColor);
+            localStorage.setItem('toolbox-intro-bg-opacity', bgOpacity);
+            
+            closeIntroductionBackgroundModal();
+        }
+        
+        function resetIntroductionBackground() {
+            const defaultColor = '#667eea';
+            const defaultOpacity = '90';
+            
+            document.getElementById('introBgColor').value = defaultColor;
+            document.getElementById('introBgOpacity').value = defaultOpacity;
+            document.getElementById('introOpacityValue').textContent = defaultOpacity + '%';
+            
+            const introPanel = document.getElementById('introductionPanel');
+            const color = hexToRgb(defaultColor);
+            introPanel.style.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${defaultOpacity / 100})`;
+            
+            localStorage.setItem('toolbox-intro-bg-color', defaultColor);
+            localStorage.setItem('toolbox-intro-bg-opacity', defaultOpacity);
+            
+            updateIntroBgPreview();
+        }
+        
+        // 背景功能
+        function loadBackground() {
+            const bgType = localStorage.getItem('toolbox-bg-type') || 'image';
+            const bgImage = localStorage.getItem('toolbox-bg-image');
+            const bgColor = localStorage.getItem('toolbox-bg-color') || '#ffffff';
+            const bgOverlay = localStorage.getItem('toolbox-bg-overlay') || '15';
+            
+            currentBgType = bgType;
+            selectBgType(bgType);
+            
+            if (bgType === 'image' && bgImage) {
+                document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+                document.getElementById('bgImageUrl').value = bgImage;
+            } else if (bgType === 'color') {
+                document.documentElement.style.setProperty('--bg-color', bgColor);
+                document.getElementById('bgColorPicker').value = bgColor;
+                document.getElementById('colorPreview').style.background = bgColor;
+            }
+            
+            document.documentElement.style.setProperty('--bg-overlay', `rgba(255, 255, 255, ${bgOverlay / 100})`);
+            document.getElementById('bgOverlay').value = bgOverlay;
+            document.getElementById('overlayValue').textContent = bgOverlay + '%';
+            
+            updateBgPreview();
+        }
+        
+        function selectBgType(type) {
+            currentBgType = type;
+            
+            // 更新UI
+            document.getElementById('bgTypeImage').classList.remove('active');
+            document.getElementById('bgTypeColor').classList.remove('active');
+            document.getElementById('bgType' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+            
+            // 显示/隐藏对应的设置区域
+            document.getElementById('imageBgSettings').style.display = type === 'image' ? 'block' : 'none';
+            document.getElementById('colorBgSettings').style.display = type === 'color' ? 'block' : 'none';
+            
+            // 更新预览
+            updateBgPreview();
+        }
+        
+        function showBackgroundModal() {
+            document.getElementById('backgroundModal').style.display = 'flex';
+        }
+        
+        function closeBackgroundModal() {
+            document.getElementById('backgroundModal').style.display = 'none';
+            uploadedBgImage = null;
+            document.getElementById('imageFileName').textContent = '';
+        }
+        
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('请上传有效的图片文件 (jpg, png, gif, tiff, webp)');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) { // 5MB限制
+                alert('图片大小不能超过5MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedBgImage = e.target.result;
+                document.getElementById('imageFileName').textContent = `已选择: ${file.name}`;
+                updateBgPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function handleToolIconUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('请上传有效的图片文件 (jpg, png, gif, tiff, webp)');
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) { // 2MB限制
+                alert('图标大小不能超过2MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedToolIcon = e.target.result;
+                document.getElementById('toolIconFileName').textContent = `已选择: ${file.name}`;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function updateBgPreview() {
+            const preview = document.getElementById('bgPreview');
+            
+            if (currentBgType === 'image') {
+                const url = document.getElementById('bgImageUrl').value;
+                if (uploadedBgImage) {
+                    preview.style.backgroundImage = `url("${uploadedBgImage}")`;
+                    preview.textContent = '';
+                } else if (url) {
+                    preview.style.backgroundImage = `url("${url}")`;
+                    preview.textContent = '';
+                } else {
+                    preview.style.backgroundImage = 'none';
+                    preview.textContent = '图片背景预览';
+                }
+            } else {
+                preview.style.backgroundImage = 'none';
+                preview.textContent = '纯色背景预览';
+            }
+        }
+        
+        function saveBackground() {
+            const bgOverlay = document.getElementById('bgOverlay').value;
+            
+            // 保存背景类型
+            localStorage.setItem('toolbox-bg-type', currentBgType);
+            
+            if (currentBgType === 'image') {
+                let bgImage = document.getElementById('bgImageUrl').value.trim();
+                
+                // 优先使用上传的图片
+                if (uploadedBgImage) {
+                    bgImage = uploadedBgImage;
+                    localStorage.setItem('toolbox-bg-image-upload', uploadedBgImage);
+                }
+                
+                if (bgImage) {
+                    document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+                    localStorage.setItem('toolbox-bg-image', bgImage);
+                } else {
+                    document.documentElement.style.setProperty('--bg-image', 'none');
+                    localStorage.removeItem('toolbox-bg-image');
+                }
+                
+                // 清除纯色背景
+                document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                localStorage.removeItem('toolbox-bg-color');
+            } else {
+                const bgColor = document.getElementById('bgColorPicker').value;
+                document.documentElement.style.setProperty('--bg-color', bgColor);
+                localStorage.setItem('toolbox-bg-color', bgColor);
+                
+                // 清除图片背景
+                document.documentElement.style.setProperty('--bg-image', 'none');
+                localStorage.removeItem('toolbox-bg-image');
+                localStorage.removeItem('toolbox-bg-image-upload');
+            }
+            
+            document.documentElement.style.setProperty('--bg-overlay', `rgba(255, 255, 255, ${bgOverlay / 100})`);
+            localStorage.setItem('toolbox-bg-overlay', bgOverlay);
+            
+            closeBackgroundModal();
+        }
+        
+        function resetBackground() {
+            currentBgType = 'image';
+            selectBgType('image');
+            
+            document.documentElement.style.setProperty('--bg-image', 'none');
+            document.documentElement.style.setProperty('--bg-color', '#ffffff');
+            document.documentElement.style.setProperty('--bg-overlay', 'rgba(255, 255, 255, 0.85)');
+            
+            document.getElementById('bgImageUrl').value = '';
+            document.getElementById('bgColorPicker').value = '#ffffff';
+            document.getElementById('bgOverlay').value = '15';
+            document.getElementById('overlayValue').textContent = '15%';
+            document.getElementById('imageFileName').textContent = '';
+            document.getElementById('colorPreview').style.background = '#ffffff';
+            
+            uploadedBgImage = null;
+            
+            localStorage.removeItem('toolbox-bg-image');
+            localStorage.removeItem('toolbox-bg-image-upload');
+            localStorage.removeItem('toolbox-bg-color');
+            localStorage.setItem('toolbox-bg-type', 'image');
+            localStorage.setItem('toolbox-bg-overlay', '15');
+            
+            updateBgPreview();
+        }
+        
+        // =============== 改进的拖拽系统 ===============
+        function initModuleDragAndDrop() {
+            const container = document.getElementById('modulesContainer');
+            
+            // 使用 Sortable.js 实现更好的拖拽
+            new Sortable(container, {
+                animation: 150,
+                ghostClass: 'dragging',
+                chosenClass: 'dragging',
+                dragClass: 'dragging',
+                handle: isEditMode ? '.module' : false,
+                disabled: !isEditMode,
+                onEnd: function(evt) {
+                    updateModuleOrder();
+                }
+            });
+        }
+        
+        function initToolDragAndDrop(moduleElement) {
+            const toolContainer = moduleElement.querySelector('.module-content');
+            if (!toolContainer) return;
+            
+            new Sortable(toolContainer, {
+                animation: 150,
+                ghostClass: 'tool-dragging',
+                chosenClass: 'tool-dragging',
+                dragClass: 'tool-dragging',
+                handle: isEditMode ? '.tool-item' : false,
+                disabled: !isEditMode,
+                onEnd: function(evt) {
+                    updateToolOrderInModule(moduleElement);
+                }
+            });
+        }
+        
+        function initDragAndDrop() {
+            initModuleDragAndDrop();
+            document.querySelectorAll('.module').forEach(module => {
+                initToolDragAndDrop(module);
+            });
+        }
+        
+        // 模块和工具管理功能
         function generateToolId() {
             return 'tool-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         }
         
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadModules();
-            renderModules();
-            updateTargetModuleSelect();
-        });
-        
-        // 加载模块数据
         function loadModules() {
             const saved = localStorage.getItem('toolbox-modules');
             if (saved) {
@@ -726,17 +1936,43 @@
                     }
                 });
             } else {
-                currentModules = JSON.parse(JSON.stringify(defaultModules));
+                // 默认模块 - 注意：现在第一个模块会显示在最上面
+                currentModules = [
+                    {
+                        id: 'research-tools',
+                        name: '科研工具',
+                        icon: '🔬',
+                        layout: 'grid-layout',
+                        color: '#27ae60',
+                        description: '科研相关工具',
+                        tools: [
+                            { id: 'tool-4', name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
+                            { id: 'tool-5', name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
+                            { id: 'tool-6', name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
+                        ]
+                    },
+                    {
+                        id: 'search-tools',
+                        name: '搜索工具',
+                        icon: '🌐',
+                        layout: 'grid-layout',
+                        color: '#3498db',
+                        description: '各类信息检索工具',
+                        tools: [
+                            { id: 'tool-1', name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
+                            { id: 'tool-2', name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
+                            { id: 'tool-3', name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
+                        ]
+                    }
+                ];
                 saveModules();
             }
         }
         
-        // 保存模块数据
         function saveModules() {
             localStorage.setItem('toolbox-modules', JSON.stringify(currentModules));
         }
         
-        // 渲染所有模块
         function renderModules() {
             const container = document.getElementById('modulesContainer');
             container.innerHTML = '';
@@ -746,11 +1982,13 @@
                     <div class="empty-module" onclick="showAddModuleModal()">
                         <div class="empty-module-icon">📦</div>
                         <div>点击这里添加第一个模块</div>
+                        <div style="font-size: 14px; margin-top: 10px;">或使用上方的"添加新模块"按钮</div>
                     </div>
                 `;
                 return;
             }
             
+            // 按顺序渲染模块（现在第一个显示在最上面）
             currentModules.forEach(module => {
                 container.appendChild(createModuleElement(module));
             });
@@ -758,11 +1996,9 @@
             // 初始化拖拽排序（在编辑模式下）
             if (isEditMode) {
                 initDragAndDrop();
-                initAllToolItemDragAndDrop();
             }
         }
         
-        // 创建单个模块的DOM元素
         function createModuleElement(module) {
             const moduleDiv = document.createElement('div');
             moduleDiv.className = 'module';
@@ -770,16 +2006,20 @@
             moduleDiv.dataset.moduleId = module.id;
             
             // 设置模块颜色
-            moduleDiv.style.borderTop = `4px solid ${module.color}`;
+            moduleDiv.style.setProperty('--module-color', module.color);
             
-            // 工具项目HTML
+            // 工具项目HTML - 现在使用统一的小型卡片样式
             let toolsHtml = '';
             if (module.tools && module.tools.length > 0) {
                 module.tools.forEach(tool => {
                     toolsHtml += `
                         <a href="${tool.url}" target="_blank" class="tool-item" data-tool-id="${tool.id}">
+                            <div class="tool-controls">
+                                <button class="tool-edit-btn" onclick="editTool('${tool.id}', '${module.id}', event)">✏️</button>
+                                <button class="tool-delete-btn" onclick="deleteTool('${tool.id}', '${module.id}', event)">×</button>
+                            </div>
                             <div class="tool-icon">
-                                ${tool.icon.startsWith('http') ? 
+                                ${tool.icon.startsWith('http') || tool.icon.startsWith('data:image') ? 
                                     `<img src="${tool.icon}" alt="${tool.name}" onerror="this.style.display='none';this.parentElement.innerHTML='${tool.name.charAt(0)}';">` : 
                                     tool.icon}
                             </div>
@@ -821,167 +2061,110 @@
                 </div>
             `;
             
-            // 为模块内的工具项添加删除按钮
-            if (module.tools && module.tools.length > 0) {
-                // 稍后添加，等DOM完全渲染
-                setTimeout(() => {
-                    const toolItems = moduleDiv.querySelectorAll('.tool-item[data-tool-id]');
-                    toolItems.forEach(item => {
-                        const toolId = item.dataset.toolId;
-                        addDeleteButtonToTool(item, toolId, module.id);
-                    });
-                }, 0);
-            }
-            
             return moduleDiv;
         }
         
-        // 切换编辑模式
-        function toggleEditMode() {
-            isEditMode = !isEditMode;
-            document.body.classList.toggle('edit-mode', isEditMode);
+        // 编辑工具功能
+        function editTool(toolId, moduleId, event) {
+            if (event) event.preventDefault();
             
-            const editIcon = document.getElementById('editIcon');
-            const editText = document.getElementById('editText');
-            const modeIndicator = document.getElementById('modeIndicator');
+            const module = currentModules.find(m => m.id === moduleId);
+            if (!module) return;
             
-            if (isEditMode) {
-                editIcon.textContent = '🔒';
-                editText.textContent = '退出编辑';
-                modeIndicator.innerHTML = '✏️ 编辑模式 - 可拖拽调整模块和工具顺序';
-                initDragAndDrop();
-                initAllToolItemDragAndDrop();
-            } else {
-                editIcon.textContent = '✏️';
-                editText.textContent = '进入编辑模式';
-                modeIndicator.innerHTML = '🔒 浏览模式';
-                destroyDragAndDrop();
-                destroyToolItemDragAndDrop();
+            const tool = module.tools.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            editingTool = { ...tool, moduleId };
+            
+            document.getElementById('toolModalTitle').textContent = '✏️ 编辑工具';
+            document.getElementById('toolModalSubmitBtn').textContent = '保存更改';
+            document.getElementById('editingToolId').value = toolId;
+            
+            updateTargetModuleSelect();
+            document.getElementById('targetModule').value = moduleId;
+            document.getElementById('toolName').value = tool.name;
+            document.getElementById('toolUrl').value = tool.url;
+            document.getElementById('toolIcon').value = tool.icon.startsWith('http') || tool.icon.startsWith('data:image') ? '' : tool.icon;
+            document.getElementById('toolDescription').value = tool.desc;
+            
+            uploadedToolIcon = null;
+            document.getElementById('toolIconFileName').textContent = '';
+            
+            document.getElementById('addToolModal').style.display = 'flex';
+        }
+        
+        function deleteTool(toolId, moduleId, event) {
+            if (event) event.preventDefault();
+            
+            if (!confirm('确定要删除这个工具吗？')) return;
+            
+            const module = currentModules.find(m => m.id === moduleId);
+            if (module) {
+                module.tools = module.tools.filter(t => t.id !== toolId);
+                saveModules();
+                renderModules();
             }
         }
         
-        // 初始化模块拖拽排序
-        function initDragAndDrop() {
-            const container = document.getElementById('modulesContainer');
-            const modules = container.querySelectorAll('.module');
+        function saveTool() {
+            const toolId = document.getElementById('editingToolId').value;
+            const moduleId = document.getElementById('targetModule').value;
+            const name = document.getElementById('toolName').value.trim();
+            const url = document.getElementById('toolUrl').value.trim();
+            let icon = document.getElementById('toolIcon').value.trim() || '🔗';
+            const desc = document.getElementById('toolDescription').value.trim();
             
-            modules.forEach(module => {
-                module.draggable = true;
-                
-                module.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', module.id);
-                    module.classList.add('dragging');
-                });
-                
-                module.addEventListener('dragend', () => {
-                    module.classList.remove('dragging');
-                    updateModuleOrder();
-                });
-            });
+            if (!name || !url) {
+                alert('请填写工具名称和网址');
+                return;
+            }
             
-            container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const draggingModule = document.querySelector('.dragging');
-                if (!draggingModule) return;
-                
-                const siblings = [...container.querySelectorAll('.module:not(.dragging)')];
-                
-                const nextSibling = siblings.find(sibling => {
-                    const rect = sibling.getBoundingClientRect();
-                    return e.clientY <= rect.top + rect.height / 2;
-                });
-                
-                container.insertBefore(draggingModule, nextSibling);
-            });
-        }
-        
-        // 为所有模块内的工具项初始化拖拽排序
-        function initAllToolItemDragAndDrop() {
-            const modules = document.querySelectorAll('.module');
-            modules.forEach(module => {
-                initToolItemDragAndDrop(module);
-            });
-        }
-        
-        // 为模块内的工具项初始化拖拽排序
-        function initToolItemDragAndDrop(moduleElement) {
-            const toolContainer = moduleElement.querySelector('.module-content');
-            if (!toolContainer) return;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('网址格式不正确，请以 http:// 或 https:// 开头');
+                return;
+            }
             
-            const toolItems = toolContainer.querySelectorAll('.tool-item');
+            // 优先使用上传的图标
+            if (uploadedToolIcon) {
+                icon = uploadedToolIcon;
+            }
             
-            toolItems.forEach(item => {
-                // 只在编辑模式下可拖拽
-                item.draggable = isEditMode;
-                
-                item.addEventListener('dragstart', (e) => {
-                    if (!isEditMode) return;
-                    e.dataTransfer.setData('text/plain', item.dataset.toolId);
-                    item.classList.add('tool-dragging');
-                });
-                
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('tool-dragging');
-                    // 保存新的工具顺序到模块数据
-                    updateToolOrderInModule(moduleElement);
-                });
-            });
+            const module = currentModules.find(m => m.id === moduleId);
+            if (!module) {
+                alert('模块不存在');
+                return;
+            }
             
-            toolContainer.addEventListener('dragover', (e) => {
-                if (!isEditMode) return;
-                e.preventDefault();
-                const draggingTool = document.querySelector('.tool-dragging');
-                if (!draggingTool) return;
+            if (toolId) {
+                // 编辑现有工具
+                const toolIndex = module.tools.findIndex(t => t.id === toolId);
+                if (toolIndex !== -1) {
+                    module.tools[toolIndex] = {
+                        ...module.tools[toolIndex],
+                        name,
+                        url,
+                        icon,
+                        desc
+                    };
+                }
+            } else {
+                // 添加新工具
+                const newTool = {
+                    id: generateToolId(),
+                    name: name,
+                    url: url,
+                    icon: icon,
+                    desc: desc
+                };
                 
-                // 确保拖拽发生在同一模块内
-                if (!draggingTool.closest('.module').isSameNode(moduleElement)) return;
-                
-                const siblings = [...toolContainer.querySelectorAll('.tool-item:not(.tool-dragging)')];
-                
-                const nextSibling = siblings.find(sibling => {
-                    const rect = sibling.getBoundingClientRect();
-                    return e.clientY <= rect.top + rect.height / 2;
-                });
-                
-                toolContainer.insertBefore(draggingTool, nextSibling);
-            });
-        }
-        
-        // 销毁模块拖拽功能
-        function destroyDragAndDrop() {
-            const modules = document.querySelectorAll('.module');
-            modules.forEach(module => {
-                module.draggable = false;
-                module.classList.remove('dragging');
-            });
-        }
-        
-        // 销毁工具项拖拽功能
-        function destroyToolItemDragAndDrop() {
-            const toolItems = document.querySelectorAll('.tool-item');
-            toolItems.forEach(item => {
-                item.draggable = false;
-                item.classList.remove('tool-dragging');
-            });
-        }
-        
-        // 更新模块顺序
-        function updateModuleOrder() {
-            const container = document.getElementById('modulesContainer');
-            const moduleElements = container.querySelectorAll('.module');
-            const newOrder = [];
+                module.tools.push(newTool);
+            }
             
-            moduleElements.forEach(element => {
-                const moduleId = element.dataset.moduleId;
-                const module = currentModules.find(m => m.id === moduleId);
-                if (module) newOrder.push(module);
-            });
-            
-            currentModules = newOrder;
             saveModules();
+            renderModules();
+            closeAddToolModal();
         }
         
-        // 更新模块内工具顺序
         function updateToolOrderInModule(moduleElement) {
             const moduleId = moduleElement.dataset.moduleId;
             const module = currentModules.find(m => m.id === moduleId);
@@ -1004,48 +2187,60 @@
             saveModules();
         }
         
-        // 为工具添加删除按钮
-        function addDeleteButtonToTool(toolElement, toolId, moduleId) {
-            // 检查是否已存在删除按钮
-            if (toolElement.querySelector('.tool-delete-btn')) return;
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.body.classList.toggle('edit-mode', isEditMode);
             
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'tool-delete-btn';
-            deleteBtn.innerHTML = '×';
-            deleteBtn.title = '删除此工具';
+            const editIcon = document.getElementById('editIcon');
+            const editText = document.getElementById('editText');
+            const modeIndicator = document.getElementById('modeIndicator');
             
-            deleteBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // 防止链接跳转
-                e.stopPropagation(); // 防止事件冒泡
-                
-                if (confirm('确定要删除这个工具吗？')) {
-                    const module = currentModules.find(m => m.id === moduleId);
-                    if (module) {
-                        module.tools = module.tools.filter(t => t.id !== toolId);
-                        saveModules();
-                        renderModules(); // 重新渲染所有模块
-                    }
-                }
+            if (isEditMode) {
+                editIcon.textContent = '🔒';
+                editText.textContent = '退出编辑';
+                modeIndicator.innerHTML = '✏️ 编辑模式';
+                initDragAndDrop();
+            } else {
+                editIcon.textContent = '✏️';
+                editText.textContent = '进入编辑模式';
+                modeIndicator.innerHTML = '🔒 浏览模式';
+                // 重新初始化模块拖拽（禁用状态）
+                initModuleDragAndDrop();
+            }
+            
+            // 更新工具项的可拖拽状态
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.draggable = isEditMode;
             });
-            
-            toolElement.appendChild(deleteBtn);
         }
         
-        // 显示添加模块模态框
+        function updateModuleOrder() {
+            const container = document.getElementById('modulesContainer');
+            const moduleElements = container.querySelectorAll('.module');
+            const newOrder = [];
+            
+            moduleElements.forEach(element => {
+                const moduleId = element.dataset.moduleId;
+                const module = currentModules.find(m => m.id === moduleId);
+                if (module) newOrder.push(module);
+            });
+            
+            currentModules = newOrder;
+            saveModules();
+        }
+        
+        // 模块管理功能
         function showAddModuleModal() {
             document.getElementById('addModuleModal').style.display = 'flex';
             document.getElementById('moduleName').focus();
         }
         
-        // 关闭添加模块模态框
         function closeAddModuleModal() {
             document.getElementById('addModuleModal').style.display = 'none';
-            // 清空表单
             document.getElementById('moduleName').value = '';
             document.getElementById('moduleDescription').value = '';
         }
         
-        // 创建新模块
         function createNewModule() {
             const name = document.getElementById('moduleName').value.trim();
             const icon = document.getElementById('moduleIcon').value;
@@ -1074,30 +2269,42 @@
             updateTargetModuleSelect();
             closeAddModuleModal();
             
-            // 如果是第一个模块，自动进入编辑模式
             if (currentModules.length === 1 && !isEditMode) {
                 toggleEditMode();
             }
         }
         
-        // 显示添加工具模态框
-        function showAddToolModal() {
+        function showAddToolModal(moduleId = null) {
             updateTargetModuleSelect();
-            document.getElementById('addToolModal').style.display = 'flex';
-            document.getElementById('toolName').focus();
-        }
-        
-        // 关闭添加工具模态框
-        function closeAddToolModal() {
-            document.getElementById('addToolModal').style.display = 'none';
-            // 清空表单
+            
+            // 重置表单
+            document.getElementById('toolModalTitle').textContent = '🔧 添加新工具';
+            document.getElementById('toolModalSubmitBtn').textContent = '添加工具';
+            document.getElementById('editingToolId').value = '';
             document.getElementById('toolName').value = '';
             document.getElementById('toolUrl').value = '';
             document.getElementById('toolIcon').value = '';
             document.getElementById('toolDescription').value = '';
+            document.getElementById('toolIconFileName').textContent = '';
+            uploadedToolIcon = null;
+            
+            // 如果指定了模块ID，则选中该模块
+            if (moduleId) {
+                document.getElementById('targetModule').value = moduleId;
+            } else if (currentModules.length > 0) {
+                // 默认选中第一个模块
+                document.getElementById('targetModule').value = currentModules[0].id;
+            }
+            
+            document.getElementById('addToolModal').style.display = 'flex';
+            document.getElementById('toolName').focus();
         }
         
-        // 更新目标模块选择框
+        function closeAddToolModal() {
+            document.getElementById('addToolModal').style.display = 'none';
+            editingTool = null;
+        }
+        
         function updateTargetModuleSelect() {
             const select = document.getElementById('targetModule');
             select.innerHTML = '';
@@ -1110,50 +2317,10 @@
             });
         }
         
-        // 添加新工具
-        function addNewTool() {
-            const moduleId = document.getElementById('targetModule').value;
-            const name = document.getElementById('toolName').value.trim();
-            const url = document.getElementById('toolUrl').value.trim();
-            const icon = document.getElementById('toolIcon').value.trim() || '🔗';
-            const desc = document.getElementById('toolDescription').value.trim();
-            
-            if (!name || !url) {
-                alert('请填写工具名称和网址');
-                return;
-            }
-            
-            // 验证URL格式
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                alert('网址格式不正确，请以 http:// 或 https:// 开头');
-                return;
-            }
-            
-            const module = currentModules.find(m => m.id === moduleId);
-            if (module) {
-                const newTool = {
-                    id: generateToolId(),
-                    name: name,
-                    url: url,
-                    icon: icon,
-                    desc: desc
-                };
-                
-                module.tools.push(newTool);
-                saveModules();
-                renderModules();
-                closeAddToolModal();
-            }
-        }
-        
-        // 添加工具到指定模块（快捷方式）
         function addToolToModule(moduleId) {
-            updateTargetModuleSelect();
-            document.getElementById('targetModule').value = moduleId;
-            showAddToolModal();
+            showAddToolModal(moduleId);
         }
         
-        // 编辑模块
         function editModule(moduleId) {
             currentEditingModuleId = moduleId;
             const module = currentModules.find(m => m.id === moduleId);
@@ -1209,7 +2376,6 @@
             document.getElementById('editModuleModal').style.display = 'flex';
         }
         
-        // 保存模块编辑
         function saveModuleEdit() {
             const module = currentModules.find(m => m.id === currentEditingModuleId);
             
@@ -1226,13 +2392,11 @@
             }
         }
         
-        // 关闭编辑模块模态框
         function closeEditModuleModal() {
             document.getElementById('editModuleModal').style.display = 'none';
             currentEditingModuleId = null;
         }
         
-        // 删除模块
         function deleteModule(moduleId) {
             if (!confirm('确定要删除这个模块吗？模块内的所有工具也会被删除。')) {
                 return;
@@ -1244,27 +2408,42 @@
             updateTargetModuleSelect();
         }
         
-        // 导出配置
         function exportConfig() {
             const config = {
-                version: '1.1',
+                version: '4.1',
                 exportDate: new Date().toISOString(),
-                features: ['module-drag', 'tool-drag', 'tool-delete'],
+                features: ['introduction', 'intro-background', 'background', 'module-drag', 'tool-drag', 'tool-edit', 'file-upload', 'color-bg', 'search', 'about'],
+                introduction: {
+                    title: document.getElementById('introTitle').textContent,
+                    content: document.getElementById('introContent').textContent
+                },
+                introBackground: {
+                    color: localStorage.getItem('toolbox-intro-bg-color') || '#667eea',
+                    opacity: localStorage.getItem('toolbox-intro-bg-opacity') || '90'
+                },
+                background: {
+                    type: localStorage.getItem('toolbox-bg-type') || 'image',
+                    image: localStorage.getItem('toolbox-bg-image'),
+                    color: localStorage.getItem('toolbox-bg-color') || '#ffffff',
+                    overlay: localStorage.getItem('toolbox-bg-overlay') || '15'
+                },
                 modules: currentModules
             };
             
             const dataStr = JSON.stringify(config, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            const exportFileDefaultName = `toolbox-config-${new Date().toISOString().slice(0,10)}.json`;
+            const exportFileDefaultName = `智能工具箱配置-${new Date().toISOString().slice(0,10)}.json`;
             
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
+            
+            // 显示导出成功提示
+            alert('配置导出成功！\n文件已保存为：' + exportFileDefaultName);
         }
         
-        // 导入配置
         function importConfig() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -1278,27 +2457,90 @@
                     try {
                         const config = JSON.parse(event.target.result);
                         
-                        if (!config.modules || !Array.isArray(config.modules)) {
-                            throw new Error('配置文件格式不正确');
-                        }
-                        
-                        // 确保导入的工具都有ID
-                        config.modules.forEach(module => {
-                            if (module.tools) {
-                                module.tools.forEach(tool => {
-                                    if (!tool.id) {
-                                        tool.id = generateToolId();
+                        if (config.version && config.version.startsWith('4.')) {
+                            // 导入v4.x配置
+                            if (confirm(`将导入完整配置，这会覆盖当前所有设置，确定吗？`)) {
+                                // 导入介绍
+                                if (config.introduction) {
+                                    document.getElementById('introTitle').textContent = config.introduction.title;
+                                    document.getElementById('introContent').textContent = config.introduction.content;
+                                    localStorage.setItem('toolbox-intro-title', config.introduction.title);
+                                    localStorage.setItem('toolbox-intro-content', config.introduction.content);
+                                }
+                                
+                                // 导入介绍栏背景
+                                if (config.introBackground) {
+                                    localStorage.setItem('toolbox-intro-bg-color', config.introBackground.color || '#667eea');
+                                    localStorage.setItem('toolbox-intro-bg-opacity', config.introBackground.opacity || '90');
+                                }
+                                
+                                // 导入背景
+                                if (config.background) {
+                                    localStorage.setItem('toolbox-bg-type', config.background.type || 'image');
+                                    if (config.background.image) {
+                                        localStorage.setItem('toolbox-bg-image', config.background.image);
                                     }
-                                });
+                                    if (config.background.color) {
+                                        localStorage.setItem('toolbox-bg-color', config.background.color);
+                                    }
+                                    localStorage.setItem('toolbox-bg-overlay', config.background.overlay || '15');
+                                }
+                                
+                                // 导入模块
+                                currentModules = config.modules || [];
+                                saveModules();
+                                
+                                // 重新加载页面
+                                loadIntroduction();
+                                loadIntroductionBackground();
+                                loadBackground();
+                                renderModules();
+                                updateTargetModuleSelect();
+                                
+                                alert('配置导入成功！');
                             }
-                        });
-                        
-                        if (confirm(`将导入 ${config.modules.length} 个模块。这会覆盖当前配置，确定吗？`)) {
-                            currentModules = config.modules;
-                            saveModules();
-                            renderModules();
-                            updateTargetModuleSelect();
-                            alert('配置导入成功！');
+                        } else if (config.version && config.version.startsWith('3.')) {
+                            // 兼容v3.x配置
+                            if (confirm(`将导入v3.x配置，这会覆盖当前所有设置，确定吗？`)) {
+                                if (config.introduction) {
+                                    document.getElementById('introTitle').textContent = config.introduction.title;
+                                    document.getElementById('introContent').textContent = config.introduction.content;
+                                    localStorage.setItem('toolbox-intro-title', config.introduction.title);
+                                    localStorage.setItem('toolbox-intro-content', config.introduction.content);
+                                }
+                                
+                                if (config.background) {
+                                    localStorage.setItem('toolbox-bg-type', config.background.type || 'image');
+                                    if (config.background.image) {
+                                        localStorage.setItem('toolbox-bg-image', config.background.image);
+                                    }
+                                    if (config.background.color) {
+                                        localStorage.setItem('toolbox-bg-color', config.background.color);
+                                    }
+                                    localStorage.setItem('toolbox-bg-overlay', config.background.overlay || '15');
+                                }
+                                
+                                currentModules = config.modules || [];
+                                saveModules();
+                                
+                                loadIntroduction();
+                                loadBackground();
+                                renderModules();
+                                updateTargetModuleSelect();
+                                
+                                alert('v3.x配置导入成功！');
+                            }
+                        } else if (config.modules) {
+                            // 导入旧版本配置
+                            if (confirm(`将导入 ${config.modules.length} 个模块。这会覆盖当前模块配置，确定吗？`)) {
+                                currentModules = config.modules;
+                                saveModules();
+                                renderModules();
+                                updateTargetModuleSelect();
+                                alert('模块配置导入成功！');
+                            }
+                        } else {
+                            throw new Error('配置文件格式不正确');
                         }
                     } catch (error) {
                         alert('导入失败：' + error.message);
@@ -1311,5 +2553,8 @@
             input.click();
         }
     </script>
+    
+    <!-- 引入 Sortable.js 库以实现更好的拖拽功能 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 </body>
 </html>
