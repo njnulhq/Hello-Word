@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义工具箱 - 模块化管理版</title>
+    <title>自定义工具箱（支持工具拖拽）</title>
     <style>
         * {
             margin: 0;
@@ -179,6 +179,10 @@
         }
         
         /* 模块内容区 - 不同类型的布局 */
+        .module-content {
+            min-height: 100px;
+        }
+        
         .module-content.grid-layout {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -197,7 +201,7 @@
             gap: 15px;
         }
         
-        /* 工具项目样式 */
+        /* 工具项目样式 - 增强版 */
         .tool-item {
             background: #f8f9fa;
             border-radius: 10px;
@@ -208,11 +212,69 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            position: relative;
+            cursor: pointer;
         }
         
         .tool-item:hover {
             background: #e9ecef;
             transform: translateY(-2px);
+        }
+        
+        /* 编辑模式下工具项的样式 */
+        .edit-mode .tool-item {
+            cursor: move; /* 显示可拖拽光标 */
+        }
+        
+        .edit-mode .tool-item:hover {
+            background: #e3f2fd;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* 拖拽时的样式 */
+        .tool-item.tool-dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+            background: #bbdefb;
+            z-index: 100;
+        }
+        
+        /* 工具项中的删除按钮 */
+        .tool-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: none; /* 默认隐藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        
+        .edit-mode .tool-item:hover .tool-delete-btn {
+            display: flex;
+        }
+        
+        .tool-delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        /* 工具项拖拽占位指示器 */
+        .tool-placeholder {
+            border: 2px dashed #3498db;
+            background: rgba(52, 152, 219, 0.05);
+            border-radius: 10px;
+            height: 70px;
         }
         
         .list-layout .tool-item {
@@ -224,6 +286,7 @@
             flex-direction: column;
             text-align: center;
             justify-content: center;
+            height: 120px;
         }
         
         .tool-icon {
@@ -236,6 +299,7 @@
             border-radius: 10px;
             font-size: 20px;
             color: #3498db;
+            flex-shrink: 0;
         }
         
         .tool-icon img {
@@ -246,21 +310,76 @@
         
         .tool-info {
             flex: 1;
+            min-width: 0; /* 防止内容溢出 */
         }
         
         .tool-name {
             font-weight: 600;
             font-size: 14px;
             margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .tool-desc {
             font-size: 12px;
             color: #7f8c8d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .card-layout .tool-info {
             text-align: center;
+        }
+        
+        /* 模块编辑模式下的拖拽手柄 */
+        .edit-mode .module::before {
+            content: '⋮⋮';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #95a5a6;
+            cursor: move;
+            font-size: 18px;
+            z-index: 10;
+        }
+        
+        /* 编辑模式下工具项的手柄 */
+        .edit-mode .tool-item::after {
+            content: '⋮⋮';
+            position: absolute;
+            left: 5px;
+            color: #95a5a6;
+            font-size: 16px;
+            opacity: 0.6;
+        }
+        
+        /* 空模块样式 */
+        .empty-module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border: 2px dashed #ced4da;
+            border-radius: 15px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .empty-module:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .empty-module-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
         
         /* 模态框样式 */
@@ -338,43 +457,6 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
         
-        /* 编辑模式下的特殊元素 */
-        .edit-mode .module::before {
-            content: '⋮⋮';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #95a5a6;
-            cursor: move;
-            font-size: 18px;
-            z-index: 10;
-        }
-        
-        .empty-module {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            background: #f8f9fa;
-            border: 2px dashed #ced4da;
-            border-radius: 15px;
-            color: #6c757d;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .empty-module:hover {
-            background: #e9ecef;
-            border-color: #adb5bd;
-        }
-        
-        .empty-module-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .modules-container {
@@ -406,6 +488,15 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+            
+            .tool-delete-btn {
+                display: flex !important; /* 在小屏幕上始终显示删除按钮 */
+                top: 5px;
+                right: 5px;
+                width: 20px;
+                height: 20px;
+                font-size: 14px;
             }
         }
     </style>
@@ -566,7 +657,7 @@
         
         <footer style="text-align: center; padding: 30px; color: #7f8c8d;">
             <p>© 2023 自定义工具箱 | 配置已自动保存到本地</p>
-            <p style="font-size: 14px; margin-top: 10px;">提示：进入编辑模式可以拖拽调整模块顺序</p>
+            <p style="font-size: 14px; margin-top: 10px;">提示：进入编辑模式可以拖拽调整模块和工具顺序，鼠标悬停在工具上可显示删除按钮</p>
         </footer>
     </div>
 
@@ -586,9 +677,9 @@
                 color: '#3498db',
                 description: '各类信息检索工具',
                 tools: [
-                    { name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
-                    { name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
-                    { name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
+                    { id: 'tool-1', name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
+                    { id: 'tool-2', name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
+                    { id: 'tool-3', name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
                 ]
             },
             {
@@ -599,12 +690,17 @@
                 color: '#27ae60',
                 description: '遥感与科研相关工具',
                 tools: [
-                    { name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
-                    { name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
-                    { name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
+                    { id: 'tool-4', name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
+                    { id: 'tool-5', name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
+                    { id: 'tool-6', name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
                 ]
             }
         ];
+        
+        // 生成工具ID
+        function generateToolId() {
+            return 'tool-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -618,6 +714,17 @@
             const saved = localStorage.getItem('toolbox-modules');
             if (saved) {
                 currentModules = JSON.parse(saved);
+                
+                // 确保每个工具都有ID（兼容旧版本数据）
+                currentModules.forEach(module => {
+                    if (module.tools) {
+                        module.tools.forEach(tool => {
+                            if (!tool.id) {
+                                tool.id = generateToolId();
+                            }
+                        });
+                    }
+                });
             } else {
                 currentModules = JSON.parse(JSON.stringify(defaultModules));
                 saveModules();
@@ -651,6 +758,7 @@
             // 初始化拖拽排序（在编辑模式下）
             if (isEditMode) {
                 initDragAndDrop();
+                initAllToolItemDragAndDrop();
             }
         }
         
@@ -669,7 +777,7 @@
             if (module.tools && module.tools.length > 0) {
                 module.tools.forEach(tool => {
                     toolsHtml += `
-                        <a href="${tool.url}" target="_blank" class="tool-item">
+                        <a href="${tool.url}" target="_blank" class="tool-item" data-tool-id="${tool.id}">
                             <div class="tool-icon">
                                 ${tool.icon.startsWith('http') ? 
                                     `<img src="${tool.icon}" alt="${tool.name}" onerror="this.style.display='none';this.parentElement.innerHTML='${tool.name.charAt(0)}';">` : 
@@ -713,6 +821,18 @@
                 </div>
             `;
             
+            // 为模块内的工具项添加删除按钮
+            if (module.tools && module.tools.length > 0) {
+                // 稍后添加，等DOM完全渲染
+                setTimeout(() => {
+                    const toolItems = moduleDiv.querySelectorAll('.tool-item[data-tool-id]');
+                    toolItems.forEach(item => {
+                        const toolId = item.dataset.toolId;
+                        addDeleteButtonToTool(item, toolId, module.id);
+                    });
+                }, 0);
+            }
+            
             return moduleDiv;
         }
         
@@ -728,17 +848,19 @@
             if (isEditMode) {
                 editIcon.textContent = '🔒';
                 editText.textContent = '退出编辑';
-                modeIndicator.innerHTML = '✏️ 编辑模式 - 可拖拽调整顺序';
+                modeIndicator.innerHTML = '✏️ 编辑模式 - 可拖拽调整模块和工具顺序';
                 initDragAndDrop();
+                initAllToolItemDragAndDrop();
             } else {
                 editIcon.textContent = '✏️';
                 editText.textContent = '进入编辑模式';
                 modeIndicator.innerHTML = '🔒 浏览模式';
                 destroyDragAndDrop();
+                destroyToolItemDragAndDrop();
             }
         }
         
-        // 初始化拖拽排序
+        // 初始化模块拖拽排序
         function initDragAndDrop() {
             const container = document.getElementById('modulesContainer');
             const modules = container.querySelectorAll('.module');
@@ -760,6 +882,8 @@
             container.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 const draggingModule = document.querySelector('.dragging');
+                if (!draggingModule) return;
+                
                 const siblings = [...container.querySelectorAll('.module:not(.dragging)')];
                 
                 const nextSibling = siblings.find(sibling => {
@@ -771,12 +895,73 @@
             });
         }
         
-        // 销毁拖拽功能
+        // 为所有模块内的工具项初始化拖拽排序
+        function initAllToolItemDragAndDrop() {
+            const modules = document.querySelectorAll('.module');
+            modules.forEach(module => {
+                initToolItemDragAndDrop(module);
+            });
+        }
+        
+        // 为模块内的工具项初始化拖拽排序
+        function initToolItemDragAndDrop(moduleElement) {
+            const toolContainer = moduleElement.querySelector('.module-content');
+            if (!toolContainer) return;
+            
+            const toolItems = toolContainer.querySelectorAll('.tool-item');
+            
+            toolItems.forEach(item => {
+                // 只在编辑模式下可拖拽
+                item.draggable = isEditMode;
+                
+                item.addEventListener('dragstart', (e) => {
+                    if (!isEditMode) return;
+                    e.dataTransfer.setData('text/plain', item.dataset.toolId);
+                    item.classList.add('tool-dragging');
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('tool-dragging');
+                    // 保存新的工具顺序到模块数据
+                    updateToolOrderInModule(moduleElement);
+                });
+            });
+            
+            toolContainer.addEventListener('dragover', (e) => {
+                if (!isEditMode) return;
+                e.preventDefault();
+                const draggingTool = document.querySelector('.tool-dragging');
+                if (!draggingTool) return;
+                
+                // 确保拖拽发生在同一模块内
+                if (!draggingTool.closest('.module').isSameNode(moduleElement)) return;
+                
+                const siblings = [...toolContainer.querySelectorAll('.tool-item:not(.tool-dragging)')];
+                
+                const nextSibling = siblings.find(sibling => {
+                    const rect = sibling.getBoundingClientRect();
+                    return e.clientY <= rect.top + rect.height / 2;
+                });
+                
+                toolContainer.insertBefore(draggingTool, nextSibling);
+            });
+        }
+        
+        // 销毁模块拖拽功能
         function destroyDragAndDrop() {
             const modules = document.querySelectorAll('.module');
             modules.forEach(module => {
                 module.draggable = false;
                 module.classList.remove('dragging');
+            });
+        }
+        
+        // 销毁工具项拖拽功能
+        function destroyToolItemDragAndDrop() {
+            const toolItems = document.querySelectorAll('.tool-item');
+            toolItems.forEach(item => {
+                item.draggable = false;
+                item.classList.remove('tool-dragging');
             });
         }
         
@@ -794,6 +979,56 @@
             
             currentModules = newOrder;
             saveModules();
+        }
+        
+        // 更新模块内工具顺序
+        function updateToolOrderInModule(moduleElement) {
+            const moduleId = moduleElement.dataset.moduleId;
+            const module = currentModules.find(m => m.id === moduleId);
+            
+            if (!module) return;
+            
+            const toolContainer = moduleElement.querySelector('.module-content');
+            if (!toolContainer) return;
+            
+            const toolItems = toolContainer.querySelectorAll('.tool-item');
+            const newToolOrder = [];
+            
+            toolItems.forEach(item => {
+                const toolId = item.dataset.toolId;
+                const tool = module.tools.find(t => t.id === toolId);
+                if (tool) newToolOrder.push(tool);
+            });
+            
+            module.tools = newToolOrder;
+            saveModules();
+        }
+        
+        // 为工具添加删除按钮
+        function addDeleteButtonToTool(toolElement, toolId, moduleId) {
+            // 检查是否已存在删除按钮
+            if (toolElement.querySelector('.tool-delete-btn')) return;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'tool-delete-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.title = '删除此工具';
+            
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // 防止链接跳转
+                e.stopPropagation(); // 防止事件冒泡
+                
+                if (confirm('确定要删除这个工具吗？')) {
+                    const module = currentModules.find(m => m.id === moduleId);
+                    if (module) {
+                        module.tools = module.tools.filter(t => t.id !== toolId);
+                        saveModules();
+                        renderModules(); // 重新渲染所有模块
+                    }
+                }
+            });
+            
+            toolElement.appendChild(deleteBtn);
         }
         
         // 显示添加模块模态框
@@ -896,13 +1131,15 @@
             
             const module = currentModules.find(m => m.id === moduleId);
             if (module) {
-                module.tools.push({
+                const newTool = {
+                    id: generateToolId(),
                     name: name,
                     url: url,
                     icon: icon,
                     desc: desc
-                });
+                };
                 
+                module.tools.push(newTool);
                 saveModules();
                 renderModules();
                 closeAddToolModal();
@@ -1010,8 +1247,9 @@
         // 导出配置
         function exportConfig() {
             const config = {
-                version: '1.0',
+                version: '1.1',
                 exportDate: new Date().toISOString(),
+                features: ['module-drag', 'tool-drag', 'tool-delete'],
                 modules: currentModules
             };
             
@@ -1043,6 +1281,17 @@
                         if (!config.modules || !Array.isArray(config.modules)) {
                             throw new Error('配置文件格式不正确');
                         }
+                        
+                        // 确保导入的工具都有ID
+                        config.modules.forEach(module => {
+                            if (module.tools) {
+                                module.tools.forEach(tool => {
+                                    if (!tool.id) {
+                                        tool.id = generateToolId();
+                                    }
+                                });
+                            }
+                        });
                         
                         if (confirm(`将导入 ${config.modules.length} 个模块。这会覆盖当前配置，确定吗？`)) {
                             currentModules = config.modules;
