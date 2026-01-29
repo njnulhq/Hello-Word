@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义智能工具箱 - 完整版</title>
+    <title>自定义我的智能工具箱 - 刘怀庆</title>
     <style>
         :root {
             --bg-image: none;
@@ -82,7 +82,7 @@
             z-index: 1;
         }
         
-        /* 站内搜索功能 */
+        /* 改进的搜索容器样式 */
         .search-container {
             background: white;
             padding: 15px;
@@ -90,8 +90,15 @@
             margin-bottom: 20px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .search-input-row {
+            display: flex;
             gap: 10px;
             align-items: center;
+            width: 100%;
         }
         
         .search-input {
@@ -109,6 +116,99 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
         
+        .search-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-top: 5px;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 5px;
+        }
+        
+        .search-engine-selector {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .search-engine-btn {
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #495057;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .search-engine-btn:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .search-engine-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .search-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #495057;
+            margin-left: auto;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #27ae60;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        
         .search-btn {
             padding: 12px 24px;
             background: #3498db;
@@ -123,11 +223,26 @@
             align-items: center;
             gap: 8px;
             white-space: nowrap;
+            min-width: 100px;
         }
         
         .search-btn:hover {
             background: #2980b9;
             transform: translateY(-2px);
+        }
+        
+        .search-hint {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+            padding-left: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .search-hint-icon {
+            font-size: 14px;
         }
         
         .search-results {
@@ -953,6 +1068,20 @@
                 justify-content: center;
             }
             
+            .search-input-row {
+                flex-direction: column;
+            }
+            
+            .search-engine-selector {
+                justify-content: center;
+            }
+            
+            .search-toggle {
+                margin-left: 0;
+                justify-content: center;
+                width: 100%;
+            }
+            
             .about-btn {
                 bottom: 10px;
                 right: 10px;
@@ -996,13 +1125,51 @@
             </div>
         </div>
         
-        <!-- 站内搜索功能 -->
+        <!-- 改进的搜索功能 -->
         <div class="search-container">
-            <input type="text" class="search-input" id="searchInput" placeholder="🔍 搜索工具名称或描述..." onkeyup="handleSearchInput(event)">
-            <button class="search-btn" onclick="performSearch()">
-                <span>搜索</span>
-            </button>
+            <div class="search-input-row">
+                <input type="text" class="search-input" id="searchInput" 
+                       placeholder="🔍 输入关键词搜索..." 
+                       onkeyup="handleSearchInput(event)">
+                <button class="search-btn" onclick="performSearch()">
+                    <span id="searchBtnText">百度搜索</span>
+                </button>
+            </div>
+            
+            <div class="search-options">
+                <div class="search-engine-selector">
+                    <button class="search-engine-btn active" data-engine="baidu" onclick="selectSearchEngine('baidu')">
+                        🔍 百度
+                    </button>
+                    <button class="search-engine-btn" data-engine="google" onclick="selectSearchEngine('google')">
+                        🌐 Google
+                    </button>
+                    <button class="search-engine-btn" data-engine="bing" onclick="selectSearchEngine('bing')">
+                        🎯 Bing
+                    </button>
+                    <button class="search-engine-btn" data-engine="zhihu" onclick="selectSearchEngine('zhihu')">
+                        💡 知乎
+                    </button>
+                    <button class="search-engine-btn" data-engine="github" onclick="selectSearchEngine('github')">
+                        💻 GitHub
+                    </button>
+                </div>
+                
+                <div class="search-toggle">
+                    <span>站内搜索</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="siteSearchToggle" onchange="toggleSiteSearch()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="search-hint" id="searchHint">
+                <span class="search-hint-icon">💡</span>
+                <span>按 Enter 键或点击搜索按钮进行网页搜索</span>
+            </div>
         </div>
+        
         <div class="search-results" id="searchResults"></div>
         
         <!-- 控制面板 -->
@@ -1064,7 +1231,7 @@
                         <li>拖拽排序模块和工具项</li>
                         <li>多种模块布局选择（网格、列表、卡片）</li>
                         <li>自定义背景图片和颜色</li>
-                        <li>工具搜索功能</li>
+                        <li>网页搜索和站内搜索功能</li>
                         <li>配置导入导出</li>
                         <li>实时时间显示</li>
                         <li>响应式设计，适配各种设备</li>
@@ -1076,7 +1243,7 @@
                 <div class="about-section">
                     <h3>👨‍💻 作者信息</h3>
                     <p>本工具由池州学院教师刘怀庆，利用 AI 助手协助开发，致力于为用户提供简洁高效的工具管理解决方案。</p>
-                    <p>版本：v4.1</p>
+                    <p>版本：v4.2</p>
                     <p>更新日期：2026年1月28日</p>
                 </div>
                 
@@ -1086,6 +1253,7 @@
                     <p>2. 右键点击工具可以快速编辑或删除</p>
                     <p>3. 使用搜索功能快速找到需要的工具</p>
                     <p>4. 定期导出配置以防数据丢失</p>
+                    <p>5. 切换搜索引擎和站内搜索模式</p>
                 </div>
             </div>
             
@@ -1232,7 +1400,7 @@
                             <input type="file" id="bgImageFile" accept=".jpg,.jpeg,.png,.gif,.tiff,.tif,.webp" style="display: none;" onchange="handleImageUpload(this)">
                         </label>
                         <div id="imageFileName" class="file-name"></div>
-                        <small style="color: #7f8c8d;">支持 .jpg, .png, .gif, .tiff, .webp 格式</small>
+                        <small style="color: #7f8c8d;">支持 .jpg, .png, .gif, .tiff, .webp 格式，最大3MB</small>
                     </div>
                 </div>
                 
@@ -1360,7 +1528,7 @@
                         <input type="file" id="toolIconFile" accept=".jpg,.jpeg,.png,.gif,.tiff,.tif,.webp" style="display: none;" onchange="handleToolIconUpload(this)">
                     </label>
                 </div>
-                <small style="color: #7f8c8d;">提示：可以输入emoji表情或上传图片</small>
+                <small style="color: #7f8c8d;">提示：可以输入emoji表情或上传图片（最大1MB）</small>
                 <div id="toolIconFileName" class="file-name"></div>
             </div>
             
@@ -1408,6 +1576,37 @@
         let timeUpdateInterval = null;
         let editingTool = null;
         let searchTimeout = null;
+        let currentSearchEngine = 'baidu'; // 默认百度搜索
+        let isSiteSearchEnabled = false; // 默认关闭站内搜索
+        
+        // 搜索引擎配置
+        const searchEngines = {
+            baidu: {
+                name: '百度',
+                url: 'https://www.baidu.com/s?wd=',
+                icon: '🔍'
+            },
+            google: {
+                name: 'Google',
+                url: 'https://www.google.com/search?q=',
+                icon: '🌐'
+            },
+            bing: {
+                name: 'Bing',
+                url: 'https://www.bing.com/search?q=',
+                icon: '🎯'
+            },
+            zhihu: {
+                name: '知乎',
+                url: 'https://www.zhihu.com/search?type=content&q=',
+                icon: '💡'
+            },
+            github: {
+                name: 'GitHub',
+                url: 'https://github.com/search?q=',
+                icon: '💻'
+            }
+        };
         
         // 页面初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1443,27 +1642,115 @@
             
             // 初始化拖拽
             initModuleDragAndDrop();
+            
+            // 初始化搜索功能
+            updateSearchHint();
         });
         
-        // 站内搜索功能
+        // =============== 改进的搜索功能 ===============
+        function selectSearchEngine(engine) {
+            currentSearchEngine = engine;
+            
+            // 更新UI
+            document.querySelectorAll('.search-engine-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-engine="${engine}"]`).classList.add('active');
+            
+            // 更新搜索按钮文本
+            document.getElementById('searchBtnText').textContent = `${searchEngines[engine].name}搜索`;
+            
+            // 更新提示
+            updateSearchHint();
+        }
+        
+        function toggleSiteSearch() {
+            const toggle = document.getElementById('siteSearchToggle');
+            isSiteSearchEnabled = toggle.checked;
+            
+            // 更新搜索输入框提示
+            const searchInput = document.getElementById('searchInput');
+            if (isSiteSearchEnabled) {
+                searchInput.placeholder = '🔍 搜索工具名称或描述...';
+                // 如果当前有搜索词，立即执行站内搜索
+                if (searchInput.value.trim()) {
+                    performSearch();
+                }
+            } else {
+                searchInput.placeholder = '🔍 输入关键词搜索...';
+                // 隐藏站内搜索结果
+                hideSearchResults();
+            }
+            
+            updateSearchHint();
+        }
+        
+        function updateSearchHint() {
+            const hintElement = document.getElementById('searchHint');
+            if (isSiteSearchEnabled) {
+                hintElement.innerHTML = `
+                    <span class="search-hint-icon">🔍</span>
+                    <span>站内搜索模式：按 Enter 键或点击搜索按钮在当前工具箱中搜索</span>
+                `;
+            } else {
+                hintElement.innerHTML = `
+                    <span class="search-hint-icon">🌐</span>
+                    <span>网页搜索模式：按 Enter 键或点击搜索按钮在 <strong>${searchEngines[currentSearchEngine].name}</strong> 中搜索</span>
+                `;
+            }
+        }
+        
         function handleSearchInput(event) {
             if (event.key === 'Enter') {
                 performSearch();
                 return;
             }
             
+            // 清除之前的定时器
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                const query = document.getElementById('searchInput').value.trim();
-                if (query.length > 0) {
-                    performSearch();
-                } else {
-                    hideSearchResults();
-                }
-            }, 300);
+            
+            // 只有在站内搜索模式下才实时搜索
+            if (isSiteSearchEnabled) {
+                searchTimeout = setTimeout(function() {
+                    const query = document.getElementById('searchInput').value.trim();
+                    if (query.length > 0) {
+                        performSiteSearch();
+                    } else {
+                        hideSearchResults();
+                    }
+                }, 300);
+            } else {
+                hideSearchResults();
+            }
         }
         
         function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                if (isSiteSearchEnabled) {
+                    hideSearchResults();
+                }
+                return;
+            }
+            
+            if (isSiteSearchEnabled) {
+                performSiteSearch();
+            } else {
+                performWebSearch();
+            }
+        }
+        
+        function performWebSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const engine = searchEngines[currentSearchEngine];
+            const searchUrl = engine.url + encodeURIComponent(query);
+            
+            // 在新标签页打开搜索结果
+            window.open(searchUrl, '_blank');
+        }
+        
+        function performSiteSearch() {
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
             if (!query) {
                 hideSearchResults();
@@ -1496,7 +1783,7 @@
                 resultsContainer.innerHTML = `
                     <div class="no-results">
                         <div>🔍 未找到相关工具</div>
-                        <div style="font-size: 12px; margin-top: 5px;">尝试使用其他关键词搜索</div>
+                        <div style="font-size: 12px; margin-top: 5px;">尝试使用其他关键词或切换到网页搜索</div>
                     </div>
                 `;
             } else {
@@ -1532,6 +1819,111 @@
             document.getElementById('searchResults').style.display = 'none';
         }
         
+        // =============== 改进的图片上传功能 ===============
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('请上传有效的图片文件 (支持格式: jpg, png, gif, tiff, webp)');
+                input.value = '';
+                return;
+            }
+            
+            // 检查文件大小 (限制为3MB，因为Data URL会变大)
+            const maxSize = 3 * 1024 * 1024; // 3MB
+            if (file.size > maxSize) {
+                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                alert(`图片大小不能超过3MB\n当前图片: ${sizeInMB}MB\n请压缩图片后重新上传`);
+                input.value = '';
+                document.getElementById('imageFileName').textContent = '文件过大，请重新选择';
+                return;
+            }
+            
+            // 检查图片尺寸
+            const img = new Image();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.onload = function() {
+                    // 检查图片尺寸限制
+                    const maxWidth = 4000;
+                    const maxHeight = 4000;
+                    
+                    if (this.width > maxWidth || this.height > maxHeight) {
+                        alert(`图片尺寸过大\n建议尺寸: 不超过${maxWidth}x${maxHeight}像素\n当前尺寸: ${this.width}x${this.height}像素`);
+                        input.value = '';
+                        document.getElementById('imageFileName').textContent = '尺寸过大，请重新选择';
+                        return;
+                    }
+                    
+                    // 图片通过所有验证
+                    uploadedBgImage = e.target.result;
+                    document.getElementById('imageFileName').textContent = `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
+                    updateBgPreview();
+                };
+                img.onerror = function() {
+                    alert('图片加载失败，请选择其他图片');
+                    input.value = '';
+                    document.getElementById('imageFileName').textContent = '图片加载失败';
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function handleToolIconUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('请上传有效的图片文件 (支持格式: jpg, png, gif, tiff, webp)');
+                input.value = '';
+                return;
+            }
+            
+            // 图标文件大小限制更小
+            const maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.size > maxSize) {
+                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                alert(`图标大小不能超过1MB\n当前文件: ${sizeInMB}MB\n建议使用小尺寸图标`);
+                input.value = '';
+                document.getElementById('toolIconFileName').textContent = '文件过大，请重新选择';
+                return;
+            }
+            
+            // 检查图标尺寸
+            const img = new Image();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.onload = function() {
+                    // 图标尺寸建议
+                    const maxSize = 200;
+                    if (this.width > maxSize || this.height > maxSize) {
+                        alert(`图标尺寸建议不超过${maxSize}x${maxSize}像素\n当前尺寸: ${this.width}x${this.height}像素`);
+                    }
+                    
+                    uploadedToolIcon = e.target.result;
+                    document.getElementById('toolIconFileName').textContent = 
+                        `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
+                };
+                img.onerror = function() {
+                    alert('图标加载失败，请选择其他图片');
+                    input.value = '';
+                    document.getElementById('toolIconFileName').textContent = '图片加载失败';
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // =============== 其他功能保持不变 ===============
         // 关于本站功能
         function showAboutModal() {
             document.getElementById('aboutModal').style.display = 'flex';
@@ -1736,53 +2128,6 @@
             document.getElementById('imageFileName').textContent = '';
         }
         
-        function handleImageUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                alert('请上传有效的图片文件 (jpg, png, gif, tiff, webp)');
-                return;
-            }
-            
-            if (file.size > 5 * 1024 * 1024) { // 5MB限制
-                alert('图片大小不能超过5MB');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedBgImage = e.target.result;
-                document.getElementById('imageFileName').textContent = `已选择: ${file.name}`;
-                updateBgPreview();
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        function handleToolIconUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                alert('请上传有效的图片文件 (jpg, png, gif, tiff, webp)');
-                return;
-            }
-            
-            if (file.size > 2 * 1024 * 1024) { // 2MB限制
-                alert('图标大小不能超过2MB');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedToolIcon = e.target.result;
-                document.getElementById('toolIconFileName').textContent = `已选择: ${file.name}`;
-            };
-            reader.readAsDataURL(file);
-        }
-        
         function updateBgPreview() {
             const preview = document.getElementById('bgPreview');
             
@@ -1817,11 +2162,22 @@
                 if (uploadedBgImage) {
                     bgImage = uploadedBgImage;
                     localStorage.setItem('toolbox-bg-image-upload', uploadedBgImage);
+                    
+                    // 检查Data URL长度限制
+                    if (uploadedBgImage.length > 2 * 1024 * 1024) { // Data URL长度限制
+                        alert('警告：图片Data URL较大，可能会影响页面加载速度。建议使用较小的图片或外部链接。');
+                    }
                 }
                 
                 if (bgImage) {
-                    document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
-                    localStorage.setItem('toolbox-bg-image', bgImage);
+                    // 检查图片链接是否有效
+                    if (bgImage.startsWith('http') || bgImage.startsWith('data:')) {
+                        document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+                        localStorage.setItem('toolbox-bg-image', bgImage);
+                    } else {
+                        alert('图片链接格式不正确，请使用完整的http/https链接或上传图片');
+                        return;
+                    }
                 } else {
                     document.documentElement.style.setProperty('--bg-image', 'none');
                     localStorage.removeItem('toolbox-bg-image');
@@ -1873,7 +2229,7 @@
             updateBgPreview();
         }
         
-        // =============== 改进的拖拽系统 ===============
+        // =============== 拖拽系统 ===============
         function initModuleDragAndDrop() {
             const container = document.getElementById('modulesContainer');
             
@@ -2410,7 +2766,7 @@
         
         function exportConfig() {
             const config = {
-                version: '4.1',
+                version: '4.2',
                 exportDate: new Date().toISOString(),
                 features: ['introduction', 'intro-background', 'background', 'module-drag', 'tool-drag', 'tool-edit', 'file-upload', 'color-bg', 'search', 'about'],
                 introduction: {
