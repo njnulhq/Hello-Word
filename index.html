@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义我的智能工具箱 - 刘怀庆</title>
+    <title> 我的智能工具箱 </title>
     <style>
         :root {
             --bg-image: none;
@@ -24,9 +24,22 @@
             padding: 20px;
             min-height: 100vh;
             position: relative;
-            padding-top: 40px; /* 为背景图片留白 */
+            padding-top: 40px;
         }
         
+
+        
+/* 剪贴板提示样式 */
+.clipboard-hint {
+    display: block;
+    color: #27ae60;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+
+
+
         /* 右上角时间显示 */
         .global-time-display {
             position: fixed;
@@ -80,6 +93,133 @@
             margin: 0 auto;
             position: relative;
             z-index: 1;
+        }
+        
+        /* =============== 用户相关模态框 =============== */
+        .user-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 420px;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #95a5a6;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .auth-tab.active {
+            color: #3498db;
+        }
+        
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #3498db;
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .form-footer a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 头像上传区域 */
+        .avatar-upload-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 3px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .avatar-preview:hover {
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+        
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-placeholder {
+            font-size: 36px;
+            color: #95a5a6;
+        }
+        
+        .avatar-upload-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .avatar-upload-btn:hover {
+            background: #2980b9;
+        }
+        
+        /* 编辑头像模态框 */
+        #avatarModal .user-modal-content {
+            max-width: 350px;
         }
         
         /* 改进的搜索容器样式 */
@@ -625,7 +765,7 @@
             border-radius: 10px;
             padding: 15px 12px;
             text-decoration: none;
-            color: #333;
+            color: #333 ;
             transition: all 0.2s;
             display: flex;
             flex-direction: column;
@@ -648,8 +788,8 @@
 
         /* 工具图标容器 - 在顶部居中，尺寸调小 */
         .tool-icon {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -664,12 +804,75 @@
         }
 
         .tool-icon img {
-            width: 20px;
-            height: 20px;
+            width: 36px;
+            height: 36px;
             object-fit: contain;
             max-width: 100%;
             max-height: 100%;
         }
+
+/* =============== 工具右键菜单样式 =============== */
+.tool-context-menu {
+    position: fixed;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    z-index: 10000;
+    min-width: 160px;
+    border: 1px solid #e0e0e0;
+    display: none;
+    animation: slideDown 0.2s ease;
+}
+
+.context-menu-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.context-menu-item:last-child {
+    border-bottom: none;
+}
+
+.context-menu-item:hover {
+    background: #f5f5f5;
+}
+
+.context-menu-item.move-to-module {
+    position: relative;
+}
+
+.module-submenu {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    min-width: 180px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+
+.context-menu-item:hover .module-submenu {
+    display: block;
+}
+
+.submenu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.submenu-item:hover {
+    background: #e9ecef;
+}
+
 
         /* 工具信息 - 文字在图标下方居中 */
         .tool-info {
@@ -684,7 +887,7 @@
 
         .tool-name {
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
             margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
@@ -694,7 +897,7 @@
         }
 
         .tool-desc {
-            font-size: 11px;
+            font-size: 10px;
             color: #7f8c8d;
             line-height: 1.3;
             overflow: hidden;
@@ -890,6 +1093,46 @@
             border-color: #3498db;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
+
+/* 密码输入框组样式 */
+.password-input-group {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-group input {
+    padding-right: 40px !important;
+    width: 100%;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #95a5a6;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #3498db;
+}
+
+.toggle-password:focus {
+    outline: none;
+}
+
         
         .bg-preview {
             width: 100%;
@@ -1012,6 +1255,142 @@
             color: #27ae60;
             font-weight: bold;
         }
+
+
+
+/* =============== 用户菜单样式 =============== */
+.user-menu {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    width: 280px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid rgba(52, 152, 219, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-menu-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #3498db, #9b59b6);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-menu-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-menu-info {
+    flex: 1;
+}
+
+.user-menu-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 3px;
+}
+
+.user-menu-email {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.user-menu-items {
+    padding: 10px 0;
+}
+
+.user-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 12px;
+}
+
+.user-menu-item:hover {
+    background: #f8f9fa;
+}
+
+.user-menu-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+.user-menu-text {
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+/* 点击头像时的波纹效果 */
+.user-avatar {
+    position: relative;
+    overflow: hidden;
+}
+
+.user-avatar::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.user-avatar:active::after {
+    width: 100%;
+    height: 100%;
+}
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+    .user-menu {
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 40px);
+        max-width: 300px;
+        z-index: 2000;
+    }
+}
         
         /* 响应式设计 */
         @media (max-width: 768px) {
@@ -1055,6 +1434,13 @@
                 font-size: 24px;
             }
             
+            .user-container {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 20px;
+            }
+            
             .search-container {
                 flex-direction: column;
             }
@@ -1096,7 +1482,9 @@
     </style>
 </head>
 <body>
-    <!-- 全局时间显示 - 右上角 -->
+
+    
+    <!-- 右上角时间显示 -->
     <div class="global-time-display">
         <div class="global-date" id="globalCurrentDate">2026年1月28日 星期三</div>
         <div class="global-time" id="globalCurrentTime">16:01</div>
@@ -1150,6 +1538,10 @@
                     <button class="search-engine-btn" data-engine="zhihu" onclick="selectSearchEngine('zhihu')">
                         💡 知乎
                     </button>
+		    <!-- 在原有的搜索引擎按钮后面添加 -->
+		    <button class="search-engine-btn" data-engine="deepseek" onclick="selectSearchEngine('deepseek')">
+	                🤖 DeepSeek
+	 	    </button>
                     <button class="search-engine-btn" data-engine="github" onclick="selectSearchEngine('github')">
                         💻 GitHub
                     </button>
@@ -1198,7 +1590,9 @@
             <button class="btn btn-secondary" onclick="importConfig()">
                 📂 导入配置
             </button>
-            
+	    
+
+
             <div class="mode-indicator" id="modeIndicator">
                 🔒 浏览模式
             </div>
@@ -1209,6 +1603,214 @@
             <!-- 模块会在这里动态生成 -->
         </div>
     </div>
+    
+    <!-- =============== 新增的用户相关模态框 =============== -->
+    
+    <!-- 用户注册/登录模态框 -->
+    <div class="modal" id="userAuthModal">
+        <div class="user-modal-content">
+            <div class="modal-header">
+                <div class="modal-title">👤 用户账户</div>
+                <button class="close-modal" onclick="closeUserAuthModal()">×</button>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">登录</button>
+                <button class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">注册</button>
+            </div>
+            
+            <!-- 登录表单 -->
+            <div class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">邮箱</label>
+                    <input type="email" id="loginEmail" placeholder="请输入您的邮箱">
+                </div>
+
+
+                
+<div class="form-group">
+    <label for="loginPassword">密码</label>
+    <div class="password-input-group">
+        <input type="password" id="loginPassword" placeholder="请输入密码">
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+    </div>
+</div>
+
+
+<div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 15px;">
+    <input type="checkbox" id="rememberMe" checked style="width: auto; margin: 0;">
+    <label for="rememberMe" style="margin: 0; font-size: 14px; color: #666;">记住我的登录信息</label>
+</div>
+
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <button class="btn" style="width: 100%;" onclick="loginUser()">
+                        登录
+                    </button>
+                </div>
+                
+<div class="form-footer">
+    还没有账户？ <a onclick="switchAuthTab('register')">点击注册</a>
+</div>
+
+<!-- 新增：云同步功能提示 -->
+<div class="form-footer" style="margin-top: 15px; padding: 10px; background: rgba(52, 152, 219, 0.1); border-radius: 8px; border-left: 3px solid #3498db;">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+        <span style="color: #3498db;">☁️</span>
+        <strong style="font-size: 13px;">云同步功能</strong>
+    </div>
+    <div style="font-size: 12px; color: #555;">
+        登录后可享受：<br>
+        • 云端备份，数据永不丢失<br>
+        • 多设备同步<br>
+        • 头像云存储
+    </div>
+</div>
+</div>
+            
+            <!-- 注册表单 -->
+            <div class="auth-form" id="registerForm">
+                <div class="avatar-upload-container">
+                    <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarUpload').click()">
+                        <div class="avatar-placeholder">👤</div>
+                    </div>
+                    <input type="file" id="avatarUpload" accept=".jpg,.jpeg,.png,.gif" style="display: none;" onchange="previewAvatar(event)">
+                    <div class="avatar-upload-btn" onclick="document.getElementById('avatarUpload').click()">
+                        上传头像
+                    </div>
+                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">点击上传头像（可选）</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerName">用户名</label>
+                    <input type="text" id="registerName" placeholder="请输入用户名">
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerEmail">邮箱</label>
+                    <input type="email" id="registerEmail" placeholder="请输入邮箱">
+                </div>
+                
+<div class="form-group">
+    <label for="registerPassword">密码</label>
+    <div class="password-input-group">
+        <input type="password" id="registerPassword" placeholder="请输入密码（至少6位）">
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerPassword', this)">👁️</button>
+    </div>
+</div>                
+
+
+<div class="form-group">
+    <label for="registerConfirmPassword">确认密码</label>
+    <div class="password-input-group">
+        <input type="password" id="registerConfirmPassword" placeholder="请再次输入密码">
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerConfirmPassword', this)">👁️</button>
+    </div>
+</div>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <button class="btn btn-success" style="width: 100%;" onclick="registerUser()">
+                        注册
+                    </button>
+                </div>
+                
+                <div class="form-footer">
+                    已有账户？ <a onclick="switchAuthTab('login')">点击登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑头像模态框 -->
+    <div class="modal" id="avatarModal">
+        <div class="user-modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <div class="modal-title">🖼️ 编辑头像</div>
+                <button class="close-modal" onclick="closeAvatarModal()">×</button>
+            </div>
+            
+            <div class="avatar-upload-container">
+                <div class="avatar-preview" id="avatarEditPreview" onclick="document.getElementById('avatarEditUpload').click()">
+                    <div class="avatar-placeholder">👤</div>
+                </div>
+                <input type="file" id="avatarEditUpload" accept=".jpg,.jpeg,.png,.gif" style="display: none;" onchange="previewAvatarEdit(event)">
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button class="avatar-upload-btn" onclick="document.getElementById('avatarEditUpload').click()">
+                        选择图片
+                    </button>
+                    <button class="avatar-upload-btn" style="background: #e74c3c;" onclick="removeAvatar()">
+                        移除头像
+                    </button>
+                </div>
+                
+                <small style="color: #7f8c8d; display: block; margin-top: 10px; text-align: center;">
+                    支持 JPG、PNG、GIF 格式，建议尺寸 200x200 像素
+                </small>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn" onclick="saveAvatar()" style="flex: 2;">
+                    保存头像
+                </button>
+                <button class="btn btn-secondary" onclick="closeAvatarModal()" style="flex: 1;">
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+<!-- 更改密码模态框 -->
+<div class="modal" id="changePasswordModal">
+    <div class="user-modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <div class="modal-title">🔐 更改密码</div>
+            <button class="close-modal" onclick="closeChangePasswordModal()">×</button>
+        </div>
+        
+        <div class="form-group">
+            <label for="currentPassword">当前密码</label>
+            <div class="password-input-group">
+                <input type="password" id="currentPassword" placeholder="请输入当前密码">
+                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword', this)">👁️</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="newPassword">新密码</label>
+            <div class="password-input-group">
+                <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
+                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword', this)">👁️</button>
+            </div>
+            <small style="color: #7f8c8d; display: block; margin-top: 5px;">密码长度至少6位字符</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="confirmNewPassword">确认新密码</label>
+            <div class="password-input-group">
+                <input type="password" id="confirmNewPassword" placeholder="请再次输入新密码">
+                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmNewPassword', this)">👁️</button>
+            </div>
+        </div>
+        
+        <div id="passwordChangeMessage" style="margin: 15px 0; padding: 10px; border-radius: 5px; display: none;"></div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button class="btn" onclick="changeUserPassword()" style="flex: 2;">
+                🔒 更改密码
+            </button>
+            <button class="btn btn-secondary" onclick="closeChangePasswordModal()" style="flex: 1;">
+                取消
+            </button>
+        </div>
+    </div>
+</div>
+
+
+    
+    <!-- =============== 原有所有模态框 =============== -->
     
     <!-- 关于本站模态框 -->
     <div class="modal" id="aboutModal">
@@ -1243,8 +1845,8 @@
                 <div class="about-section">
                     <h3>👨‍💻 作者信息</h3>
                     <p>本工具由池州学院教师刘怀庆，利用 AI 助手协助开发，致力于为用户提供简洁高效的工具管理解决方案。</p>
-                    <p>版本：v4.2</p>
-                    <p>更新日期：2026年1月28日</p>
+                    <p>版本：v6.0（云存储版）</p>
+                    <p>更新日期：2026年4月13日</p>
                 </div>
                 
                 <div class="about-section">
@@ -1252,8 +1854,7 @@
                     <p>1. 进入编辑模式后，可以拖拽排序模块和工具</p>
                     <p>2. 右键点击工具可以快速编辑或删除</p>
                     <p>3. 使用搜索功能快速找到需要的工具</p>
-                    <p>4. 定期导出配置以防数据丢失</p>
-                    <p>5. 切换搜索引擎和站内搜索模式</p>
+                    <p>4. 切换搜索引擎和站内搜索模式</p>
                 </div>
             </div>
             
@@ -1564,7 +2165,7 @@
     </div>
     
     <script>
-        // 全局状态
+        // ==================== 原有全局变量 ====================
         let isEditMode = false;
         let currentModules = [];
         let currentDraggingModule = null;
@@ -1575,11 +2176,17 @@
         let uploadedToolIcon = null;
         let timeUpdateInterval = null;
         let editingTool = null;
+	// ========== 新增：图标缓存 ==========
+	const toolIconCache = new Map();  // 存储每个工具的图片图标
         let searchTimeout = null;
-        let currentSearchEngine = 'baidu'; // 默认百度搜索
-        let isSiteSearchEnabled = false; // 默认关闭站内搜索
-        
-        // 搜索引擎配置
+        let currentSearchEngine = 'baidu';
+        let isSiteSearchEnabled = false;
+        // ==================== 新增右键菜单变量 ====================
+	let selectedToolId = null;
+	let selectedToolModuleId = null;
+	let contextMenuVisible = false;
+
+        // ==================== 原有搜索引擎配置 ====================
         const searchEngines = {
             baidu: {
                 name: '百度',
@@ -1601,6 +2208,13 @@
                 url: 'https://www.zhihu.com/search?type=content&q=',
                 icon: '💡'
             },
+
+   	     deepseek: {
+	            name: 'DeepSeek',
+	            url: 'https://www.deepseek.com/search?q=',
+	            icon: '🤖'
+	        },
+
             github: {
                 name: 'GitHub',
                 url: 'https://github.com/search?q=',
@@ -1608,23 +2222,33 @@
             }
         };
         
-        // 页面初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 加载所有数据
+// ==================== 新增：密码显示/隐藏功能 ====================
+function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        button.textContent = '👁️';
+    }
+}
+
+        // ==================== 页面初始化 ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+     
+            // 原有初始化代码
             loadIntroduction();
             loadIntroductionBackground();
             loadBackground();
             loadModules();
             
-            // 渲染页面
             renderModules();
             updateTargetModuleSelect();
             
-            // 初始化时间显示
             updateGlobalTime();
-            timeUpdateInterval = setInterval(updateGlobalTime, 1000); // 每秒更新一次
+            timeUpdateInterval = setInterval(updateGlobalTime, 1000);
             
-            // 绑定事件
             document.getElementById('bgImageUrl').addEventListener('input', updateBgPreview);
             document.getElementById('bgOverlay').addEventListener('input', function() {
                 document.getElementById('overlayValue').textContent = this.value + '%';
@@ -1639,52 +2263,266 @@
             document.getElementById('bgColorPicker').addEventListener('input', function() {
                 document.getElementById('colorPreview').style.background = this.value;
             });
-            
-            // 初始化拖拽
+	    // ========== 新增：初始化剪贴板粘贴功能 ==========
+    		initClipboardPaste();
+
+// 初始化密码输入框的小眼睛图标
+document.querySelectorAll('.password-input-group input[type="password"]').forEach(input => {
+    const button = input.parentElement.querySelector('.toggle-password');
+    if (button) {
+        button.textContent = '👁️';
+    }
+});            
+
             initModuleDragAndDrop();
-            
-            // 初始化搜索功能
             updateSearchHint();
+
+
+    // 绑定全局点击事件关闭右键菜单
+    document.addEventListener('click', (event) => {
+        const contextMenu = document.getElementById('toolContextMenu');
+        if (contextMenuVisible && contextMenu && !event.target.closest('.tool-context-menu')) {
+            closeToolContextMenu();
+        }
+    });
+
+    // 阻止右键菜单在工具上的默认行为
+    document.addEventListener('contextmenu', (event) => {
+        if (event.target.closest('.tool-item')) {
+            // 已经处理了工具右键，不需要额外处理
+        } else if (contextMenuVisible) {
+            closeToolContextMenu();
+        }
+    });
+
         });
         
-        // =============== 改进的搜索功能 ===============
+
+
+             
+        // ==================== 工具函数 ====================
+        
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function getDefaultCloudConfig() {
+            return {
+                introduction: {
+                    title: '🌟 我的智能工具箱',
+                    content: '这是一个完全自定义的工具箱，支持云存储！'
+                },
+                introBackground: {
+                    color: '#667eea',
+                    opacity: '90'
+                },
+                background: {
+                    type: 'image',
+                    image: '',
+                    color: '#ffffff',
+                    overlay: '15'
+                },
+                modules: getDefaultModules(),
+                last_saved: new Date().toISOString()
+            };
+        }
+        
+        function getDefaultModules() {
+            return [
+                {
+                    id: 'research-tools',
+                    name: '科研工具',
+                    icon: '🔬',
+                    layout: 'grid-layout',
+                    color: '#27ae60',
+                    description: '科研相关工具',
+                    tools: [
+                        { id: 'tool-4', name: 'Google Earth Engine', url: 'https://earthengine.google.com', icon: '🌍', desc: '地理分析' },
+                        { id: 'tool-5', name: 'USGS EarthExplorer', url: 'https://earthexplorer.usgs.gov', icon: '📡', desc: '遥感数据' },
+                        { id: 'tool-6', name: 'GitHub', url: 'https://github.com', icon: '💻', desc: '代码托管' }
+                    ]
+                },
+                {
+                    id: 'search-tools',
+                    name: '搜索工具',
+                    icon: '🌐',
+                    layout: 'grid-layout',
+                    color: '#3498db',
+                    description: '各类信息检索工具',
+                    tools: [
+                        { id: 'tool-1', name: 'Google', url: 'https://google.com', icon: 'https://www.google.com/favicon.ico', desc: '全球搜索' },
+                        { id: 'tool-2', name: '百度', url: 'https://baidu.com', icon: '🇨🇳', desc: '中文搜索' },
+                        { id: 'tool-3', name: 'Google学术', url: 'https://scholar.google.com', icon: '📚', desc: '学术文献' }
+                    ]
+                }
+            ];
+        }
+        
+        function loadModulesFromLocal() {
+            const saved = localStorage.getItem('toolbox-modules');
+            if (saved) {
+                try {
+                    currentModules = JSON.parse(saved);
+                } catch (error) {
+                    console.error('解析本地模块失败:', error);
+                    currentModules = getDefaultModules();
+                }
+            } else {
+                currentModules = getDefaultModules();
+            }
+            renderModules();
+        }
+        
+        // ==================== 自动保存 ====================
+        
+        function startAutoSave() {
+            if (currentUser && supabaseClient && !autoSaveInterval) {
+                autoSaveInterval = setInterval(async () => {
+                    await saveToCloud();
+                }, 30000); // 每30秒自动保存一次
+            }
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
+        
+        // ==================== 模态框控制 ====================
+        
+function showUserAuthModal() {
+    // 只获取保存的邮箱
+    const savedEmail = localStorage.getItem('toolbox-login-email');
+    
+    // 填充登录表单的邮箱
+    document.getElementById('loginEmail').value = savedEmail || '';
+    // 密码输入框保持为空，不保存密码！
+    document.getElementById('loginPassword').value = '';
+    
+    // 确保密码输入框类型正确
+    document.getElementById('loginPassword').type = 'password';
+    document.getElementById('registerPassword').type = 'password';
+    document.getElementById('registerConfirmPassword').type = 'password';
+    
+    // 重置小眼睛图标
+    if (document.querySelectorAll('.toggle-password').length > 0) {
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.textContent = '👁️';
+        });
+    }
+    
+    // 重置注册表单
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerEmail').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
+    document.getElementById('avatarPreview').innerHTML = '<div class="avatar-placeholder">👤</div>';
+    newUserAvatar = null;
+    
+    // 默认显示登录标签
+    switchAuthTab('login');
+    document.getElementById('userAuthModal').style.display = 'flex';
+}
+
+
+
+        // ==================== ====================
+        
+        function closeUserAuthModal() {
+            document.getElementById('userAuthModal').style.display = 'none';
+        }
+        
+	function switchAuthTab(tab) {
+	    // 移除所有激活状态
+	    document.getElementById('loginTab').classList.remove('active');
+	    document.getElementById('registerTab').classList.remove('active');
+	    document.getElementById('loginForm').classList.remove('active');
+	    document.getElementById('registerForm').classList.remove('active');
+    
+	    // 激活选中的标签
+	    if (tab === 'login') {
+	        document.getElementById('loginTab').classList.add('active');
+	        document.getElementById('loginForm').classList.add('active');
+	        
+	        // 如果是切换到登录标签，保持已有的登录信息
+	        const savedEmail = localStorage.getItem('toolbox-login-email');
+        	const savedPassword = localStorage.getItem('toolbox-login-password');
+	        if (savedEmail) {
+	            document.getElementById('loginEmail').value = savedEmail;
+        	}
+	        if (savedPassword) {
+        	    document.getElementById('loginPassword').value = savedPassword;
+	        }	
+	    } else {
+	        document.getElementById('registerTab').classList.add('active');
+        	document.getElementById('registerForm').classList.add('active');
+        
+	        // 切换到注册标签时清空登录表单（可选）
+	        document.getElementById('loginEmail').value = '';
+        	document.getElementById('loginPassword').value = '';
+	    }
+	}
+        
+        // ==================== 修改原有保存函数以支持云存储 ====================
+        
+        function saveModules() {
+            localStorage.setItem('toolbox-modules', JSON.stringify(currentModules));
+            if (currentUser) {
+                saveToCloud();
+            }
+        }
+        
+        // ==================== 原有所有函数（保持原样） ====================
+        
+        // 搜索功能
         function selectSearchEngine(engine) {
             currentSearchEngine = engine;
             
-            // 更新UI
             document.querySelectorAll('.search-engine-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.querySelector(`[data-engine="${engine}"]`).classList.add('active');
-            
-            // 更新搜索按钮文本
-            document.getElementById('searchBtnText').textContent = `${searchEngines[engine].name}搜索`;
-            
-            // 更新提示
+	
+	    if (!isSiteSearchEnabled) {
+        	document.getElementById('searchBtnText').textContent = `${searchEngines[engine].name}搜索`;
+	    }         
             updateSearchHint();
         }
+
         
-        function toggleSiteSearch() {
-            const toggle = document.getElementById('siteSearchToggle');
-            isSiteSearchEnabled = toggle.checked;
-            
-            // 更新搜索输入框提示
-            const searchInput = document.getElementById('searchInput');
-            if (isSiteSearchEnabled) {
-                searchInput.placeholder = '🔍 搜索工具名称或描述...';
-                // 如果当前有搜索词，立即执行站内搜索
-                if (searchInput.value.trim()) {
-                    performSearch();
-                }
-            } else {
-                searchInput.placeholder = '🔍 输入关键词搜索...';
-                // 隐藏站内搜索结果
-                hideSearchResults();
-            }
-            
-            updateSearchHint();
+function toggleSiteSearch() {
+    const toggle = document.getElementById('siteSearchToggle');
+    isSiteSearchEnabled = toggle.checked;
+    
+    const searchInput = document.getElementById('searchInput');
+    const searchBtnText = document.getElementById('searchBtnText');
+    
+    if (isSiteSearchEnabled) {
+        // 站内搜索模式
+        searchInput.placeholder = '🔍 搜索工具名称或描述...';
+        searchBtnText.textContent = '站内搜索';
+        searchInput.focus(); // 可选：让搜索框获得焦点
+        
+        // 如果有输入内容，立即搜索
+        const query = searchInput.value.trim();
+        if (query) {
+            performSiteSearch();
         }
+    } else {
+        // 网页搜索模式
+        searchInput.placeholder = '🔍 输入关键词搜索...';
+        searchBtnText.textContent = `${searchEngines[currentSearchEngine].name}搜索`;
+        hideSearchResults();
+    }
+    
+    updateSearchHint();
+}
         
+
+
         function updateSearchHint() {
             const hintElement = document.getElementById('searchHint');
             if (isSiteSearchEnabled) {
@@ -1700,16 +2538,16 @@
             }
         }
         
+
+
         function handleSearchInput(event) {
             if (event.key === 'Enter') {
                 performSearch();
                 return;
             }
             
-            // 清除之前的定时器
             clearTimeout(searchTimeout);
             
-            // 只有在站内搜索模式下才实时搜索
             if (isSiteSearchEnabled) {
                 searchTimeout = setTimeout(function() {
                     const query = document.getElementById('searchInput').value.trim();
@@ -1746,7 +2584,6 @@
             const engine = searchEngines[currentSearchEngine];
             const searchUrl = engine.url + encodeURIComponent(query);
             
-            // 在新标签页打开搜索结果
             window.open(searchUrl, '_blank');
         }
         
@@ -1759,7 +2596,6 @@
             
             const results = [];
             
-            // 在所有模块中搜索工具
             currentModules.forEach(module => {
                 module.tools.forEach(tool => {
                     if (tool.name.toLowerCase().includes(query) || 
@@ -1791,7 +2627,6 @@
                     const item = document.createElement('div');
                     item.className = 'search-result-item';
                     item.onclick = function() {
-                        // 跳转到对应工具
                         window.open(result.tool.url, '_blank');
                     };
                     
@@ -1819,12 +2654,11 @@
             document.getElementById('searchResults').style.display = 'none';
         }
         
-        // =============== 改进的图片上传功能 ===============
+        // 图片上传
         function handleImageUpload(input) {
             const file = input.files[0];
             if (!file) return;
             
-            // 检查文件类型
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
             if (!validTypes.includes(file.type)) {
                 alert('请上传有效的图片文件 (支持格式: jpg, png, gif, tiff, webp)');
@@ -1832,8 +2666,7 @@
                 return;
             }
             
-            // 检查文件大小 (限制为3MB，因为Data URL会变大)
-            const maxSize = 3 * 1024 * 1024; // 3MB
+            const maxSize = 3 * 1024 * 1024;
             if (file.size > maxSize) {
                 const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
                 alert(`图片大小不能超过3MB\n当前图片: ${sizeInMB}MB\n请压缩图片后重新上传`);
@@ -1842,13 +2675,11 @@
                 return;
             }
             
-            // 检查图片尺寸
             const img = new Image();
             const reader = new FileReader();
             
             reader.onload = function(e) {
                 img.onload = function() {
-                    // 检查图片尺寸限制
                     const maxWidth = 4000;
                     const maxHeight = 4000;
                     
@@ -1859,9 +2690,8 @@
                         return;
                     }
                     
-                    // 图片通过所有验证
                     uploadedBgImage = e.target.result;
-                    document.getElementById('imageFileName').textContent = `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
+                    document.getElementById('imageFileName').textContent = `已选择: ${file.name} (${(file.size/1024).tofixed(1)}KB, ${this.width}x${this.height})`;
                     updateBgPreview();
                 };
                 img.onerror = function() {
@@ -1874,57 +2704,69 @@
             
             reader.readAsDataURL(file);
         }
+
+
+
+
+
         
-        function handleToolIconUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                alert('请上传有效的图片文件 (支持格式: jpg, png, gif, tiff, webp)');
-                input.value = '';
-                return;
-            }
-            
-            // 图标文件大小限制更小
-            const maxSize = 1 * 1024 * 1024; // 1MB
-            if (file.size > maxSize) {
-                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-                alert(`图标大小不能超过1MB\n当前文件: ${sizeInMB}MB\n建议使用小尺寸图标`);
-                input.value = '';
-                document.getElementById('toolIconFileName').textContent = '文件过大，请重新选择';
-                return;
-            }
-            
-            // 检查图标尺寸
-            const img = new Image();
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                img.onload = function() {
-                    // 图标尺寸建议
-                    const maxSize = 200;
-                    if (this.width > maxSize || this.height > maxSize) {
-                        alert(`图标尺寸建议不超过${maxSize}x${maxSize}像素\n当前尺寸: ${this.width}x${this.height}像素`);
-                    }
-                    
+function handleToolIconUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/tiff', 'image/tif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        alert('请上传有效的图片文件 (支持格式: jpg, png, gif, tiff, webp)');
+        input.value = '';
+        return;
+    }
+    
+    const maxSize = 1 * 1024 * 1024;
+    if (file.size > maxSize) {
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`图标大小不能超过1MB\n当前文件: ${sizeInMB}MB\n建议使用小尺寸图标`);
+        input.value = '';
+        document.getElementById('toolIconFileName').textContent = '文件过大，请重新选择';
+        return;
+    }
+    
+    const img = new Image();
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        img.onload = function() {
+            const maxSize = 200;
+            if (this.width > maxSize || this.height > maxSize) {
+                if (confirm(`图标尺寸 ${this.width}x${this.height} 像素，建议不超过 ${maxSize}x${maxSize} 像素。\n是否仍要使用此图片？`)) {
                     uploadedToolIcon = e.target.result;
-                    document.getElementById('toolIconFileName').textContent = 
-                        `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
-                };
-                img.onerror = function() {
-                    alert('图标加载失败，请选择其他图片');
+                    document.getElementById('toolIconFileName').textContent = `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
+                    document.getElementById('toolIcon').value = '';
+                } else {
                     input.value = '';
-                    document.getElementById('toolIconFileName').textContent = '图片加载失败';
-                };
-                img.src = e.target.result;
-            };
-            
-            reader.readAsDataURL(file);
-        }
+                    document.getElementById('toolIconFileName').textContent = '已取消选择';
+                }
+            } else {
+                uploadedToolIcon = e.target.result;
+                document.getElementById('toolIconFileName').textContent = `已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB, ${this.width}x${this.height})`;
+                document.getElementById('toolIcon').value = '';
+            }
+        };
+        img.onerror = function() {
+            alert('图标加载失败，请选择其他图片');
+            input.value = '';
+            document.getElementById('toolIconFileName').textContent = '图片加载失败';
+        };
+        img.src = e.target.result;
+    };
+    
+    reader.readAsDataURL(file);
+}
         
-        // =============== 其他功能保持不变 ===============
-        // 关于本站功能
+
+
+
+
+        // 关于本站
         function showAboutModal() {
             document.getElementById('aboutModal').style.display = 'flex';
         }
@@ -1933,7 +2775,7 @@
             document.getElementById('aboutModal').style.display = 'none';
         }
         
-        // 导出配置提示功能
+       // 导出配置提示功能
         function showExportHelp() {
             document.getElementById('exportHelpModal').style.display = 'flex';
         }
@@ -1944,13 +2786,12 @@
         
         function confirmExport() {
             closeExportHelpModal();
-            setTimeout(exportConfig, 100); // 短暂延迟后执行导出
+            setTimeout(exportConfig, 100);// 短暂延迟后执行导出
         }
         
-        // 全局时间显示功能
+        // 时间显示
         function updateGlobalTime() {
             const now = new Date();
-            
             // 格式化日期：2026年1月28日 星期三
             const year = now.getFullYear();
             const month = now.getMonth() + 1;
@@ -1960,15 +2801,14 @@
             const weekday = weekdays[day];
             
             document.getElementById('globalCurrentDate').textContent = `${year}年${month}月${date}日 ${weekday}`;
-            
-            // 格式化时间：16:01
+              // 格式化时间：16:01
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
             
             document.getElementById('globalCurrentTime').textContent = `${hours}:${minutes}`;
         }
         
-        // 介绍栏功能
+       // 介绍栏功能
         function loadIntroduction() {
             const title = localStorage.getItem('toolbox-intro-title');
             const content = localStorage.getItem('toolbox-intro-content');
@@ -2041,6 +2881,11 @@
                 localStorage.setItem('toolbox-intro-content', content);
             }
             
+            // 如果是登录状态，保存到云端
+            if (currentUser) {
+                saveToCloud();
+            }
+            
             closeIntroductionModal();
         }
         
@@ -2054,6 +2899,11 @@
             
             localStorage.setItem('toolbox-intro-bg-color', bgColor);
             localStorage.setItem('toolbox-intro-bg-opacity', bgOpacity);
+            
+            // 如果是登录状态，保存到云端
+            if (currentUser) {
+                saveToCloud();
+            }
             
             closeIntroductionBackgroundModal();
         }
@@ -2073,48 +2923,66 @@
             localStorage.setItem('toolbox-intro-bg-color', defaultColor);
             localStorage.setItem('toolbox-intro-bg-opacity', defaultOpacity);
             
+            // 如果是登录状态，保存到云端
+            if (currentUser) {
+                saveToCloud();
+            }
+            
             updateIntroBgPreview();
         }
         
         // 背景功能
-        function loadBackground() {
-            const bgType = localStorage.getItem('toolbox-bg-type') || 'image';
-            const bgImage = localStorage.getItem('toolbox-bg-image');
-            const bgColor = localStorage.getItem('toolbox-bg-color') || '#ffffff';
-            const bgOverlay = localStorage.getItem('toolbox-bg-overlay') || '15';
-            
-            currentBgType = bgType;
-            selectBgType(bgType);
-            
-            if (bgType === 'image' && bgImage) {
-                document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
-                document.getElementById('bgImageUrl').value = bgImage;
-            } else if (bgType === 'color') {
-                document.documentElement.style.setProperty('--bg-color', bgColor);
-                document.getElementById('bgColorPicker').value = bgColor;
-                document.getElementById('colorPreview').style.background = bgColor;
-            }
-            
-            document.documentElement.style.setProperty('--bg-overlay', `rgba(255, 255, 255, ${bgOverlay / 100})`);
-            document.getElementById('bgOverlay').value = bgOverlay;
-            document.getElementById('overlayValue').textContent = bgOverlay + '%';
-            
-            updateBgPreview();
+function loadBackground() {
+    const bgType = localStorage.getItem('toolbox-bg-type') || 'image';
+    const bgImage = localStorage.getItem('toolbox-bg-image');
+    const bgColor = localStorage.getItem('toolbox-bg-color') || '#ffffff';
+    const bgOverlay = localStorage.getItem('toolbox-bg-overlay') || '15';
+    
+    // ==========【新增】默认背景图片URL ==========
+    // 在这里设置你喜欢的默认背景图片
+    const DEFAULT_BACKGROUND_URL = 'https://www.czu.edu.cn/__local/5/86/A1/EDDA7171CE2075474BD7FE1FE45_90D8C969_240F64.jpg';
+    // 其他备选：
+    // const DEFAULT_BACKGROUND_URL = 'https://images.pexels.com/photos/531880/pexels-photo-531880.jpeg';
+    // const DEFAULT_BACKGROUND_URL = 'https://img95.699pic.com/photo/50046/5562.jpg_wh300.jpg';
+    // =========================================
+    
+    currentBgType = bgType;
+    selectBgType(bgType);
+    
+    if (bgType === 'image') {
+        // 修改这里：如果有自定义图片就用自定义的，否则用默认图片
+        const finalBgImage = bgImage || DEFAULT_BACKGROUND_URL;
+        
+        document.documentElement.style.setProperty('--bg-image', `url("${finalBgImage}")`);
+        document.getElementById('bgImageUrl').value = finalBgImage;
+        
+        // 如果是默认图片，也保存到localStorage，这样用户下次打开还是这个背景
+        if (!bgImage) {
+            localStorage.setItem('toolbox-bg-image', finalBgImage);
         }
+    } else if (bgType === 'color') {
+        document.documentElement.style.setProperty('--bg-color', bgColor);
+        document.getElementById('bgColorPicker').value = bgColor;
+        document.getElementById('colorPreview').style.background = bgColor;
+    }
+    
+    document.documentElement.style.setProperty('--bg-overlay', `rgba(255, 255, 255, ${bgOverlay / 100})`);
+    document.getElementById('bgOverlay').value = bgOverlay;
+    document.getElementById('overlayValue').textContent = bgOverlay + '%';
+    
+    updateBgPreview();
+}
         
         function selectBgType(type) {
             currentBgType = type;
-            
-            // 更新UI
+              // 更新UI
             document.getElementById('bgTypeImage').classList.remove('active');
             document.getElementById('bgTypeColor').classList.remove('active');
             document.getElementById('bgType' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
-            
-            // 显示/隐藏对应的设置区域
+             // 显示/隐藏对应的设置区域           
             document.getElementById('imageBgSettings').style.display = type === 'image' ? 'block' : 'none';
             document.getElementById('colorBgSettings').style.display = type === 'color' ? 'block' : 'none';
-            
-            // 更新预览
+            // 更新预览   
             updateBgPreview();
         }
         
@@ -2151,14 +3019,12 @@
         
         function saveBackground() {
             const bgOverlay = document.getElementById('bgOverlay').value;
-            
-            // 保存背景类型
+             // 保存背景类型  
             localStorage.setItem('toolbox-bg-type', currentBgType);
             
             if (currentBgType === 'image') {
                 let bgImage = document.getElementById('bgImageUrl').value.trim();
-                
-                // 优先使用上传的图片
+              // 优先使用上传的图片
                 if (uploadedBgImage) {
                     bgImage = uploadedBgImage;
                     localStorage.setItem('toolbox-bg-image-upload', uploadedBgImage);
@@ -2168,11 +3034,11 @@
                         alert('警告：图片Data URL较大，可能会影响页面加载速度。建议使用较小的图片或外部链接。');
                     }
                 }
-                
+
                 if (bgImage) {
-                    // 检查图片链接是否有效
                     if (bgImage.startsWith('http') || bgImage.startsWith('data:')) {
                         document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+
                         localStorage.setItem('toolbox-bg-image', bgImage);
                     } else {
                         alert('图片链接格式不正确，请使用完整的http/https链接或上传图片');
@@ -2182,7 +3048,6 @@
                     document.documentElement.style.setProperty('--bg-image', 'none');
                     localStorage.removeItem('toolbox-bg-image');
                 }
-                
                 // 清除纯色背景
                 document.documentElement.style.setProperty('--bg-color', '#ffffff');
                 localStorage.removeItem('toolbox-bg-color');
@@ -2190,7 +3055,6 @@
                 const bgColor = document.getElementById('bgColorPicker').value;
                 document.documentElement.style.setProperty('--bg-color', bgColor);
                 localStorage.setItem('toolbox-bg-color', bgColor);
-                
                 // 清除图片背景
                 document.documentElement.style.setProperty('--bg-image', 'none');
                 localStorage.removeItem('toolbox-bg-image');
@@ -2199,6 +3063,11 @@
             
             document.documentElement.style.setProperty('--bg-overlay', `rgba(255, 255, 255, ${bgOverlay / 100})`);
             localStorage.setItem('toolbox-bg-overlay', bgOverlay);
+            
+            // 如果是登录状态，保存到云端
+            if (currentUser) {
+                saveToCloud();
+            }
             
             closeBackgroundModal();
         }
@@ -2226,50 +3095,277 @@
             localStorage.setItem('toolbox-bg-type', 'image');
             localStorage.setItem('toolbox-bg-overlay', '15');
             
+            // 如果是登录状态，保存到云端
+            if (currentUser) {
+                saveToCloud();
+            }
+            
             updateBgPreview();
         }
-        
-        // =============== 拖拽系统 ===============
-        function initModuleDragAndDrop() {
-            const container = document.getElementById('modulesContainer');
-            
-            // 使用 Sortable.js 实现更好的拖拽
-            new Sortable(container, {
-                animation: 150,
-                ghostClass: 'dragging',
-                chosenClass: 'dragging',
-                dragClass: 'dragging',
-                handle: isEditMode ? '.module' : false,
-                disabled: !isEditMode,
-                onEnd: function(evt) {
-                    updateModuleOrder();
-                }
-            });
+
+
+
+
+
+
+// ==================== 右键菜单功能 ====================
+
+function showToolContextMenu(toolId, moduleId, event) {
+    event.preventDefault();
+    
+    selectedToolId = toolId;
+    selectedToolModuleId = moduleId;
+    
+    // 生成模块列表
+    updateModuleSubmenu();
+    
+    const contextMenu = document.getElementById('toolContextMenu');
+    const x = event.clientX;
+    const y = event.clientY;
+    
+    // 确保菜单不会超出屏幕
+    const menuWidth = 200;
+    const menuHeight = 150;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let finalX = x;
+    let finalY = y;
+    
+    if (x + menuWidth > viewportWidth) {
+        finalX = viewportWidth - menuWidth - 10;
+    }
+    
+    if (y + menuHeight > viewportHeight) {
+        finalY = viewportHeight - menuHeight - 10;
+    }
+    
+    contextMenu.style.left = finalX + 'px';
+    contextMenu.style.top = finalY + 'px';
+    contextMenu.style.display = 'block';
+    contextMenuVisible = true;
+    
+    // 点击其他地方关闭菜单
+    setTimeout(() => {
+        document.addEventListener('click', closeContextMenu);
+    }, 10);
+}
+
+function closeContextMenu(event) {
+    if (contextMenuVisible) {
+        const contextMenu = document.getElementById('toolContextMenu');
+        if (!contextMenu.contains(event.target)) {
+            contextMenu.style.display = 'none';
+            contextMenuVisible = false;
+            document.removeEventListener('click', closeContextMenu);
         }
+    }
+}
+
+function updateModuleSubmenu() {
+    const submenu = document.getElementById('moduleSubmenu');
+    submenu.innerHTML = '';
+    
+    currentModules.forEach(module => {
+        // 不显示当前模块
+        if (module.id !== selectedToolModuleId) {
+            const item = document.createElement('div');
+            item.className = 'submenu-item';
+            item.textContent = `${module.icon} ${module.name}`;
+            item.onclick = () => moveToolToModule(selectedToolId, selectedToolModuleId, module.id);
+            submenu.appendChild(item);
+        }
+    });
+    
+    if (submenu.children.length === 0) {
+        const item = document.createElement('div');
+        item.className = 'submenu-item';
+        item.textContent = '暂无其他模块';
+        item.style.color = '#95a5a6';
+        item.style.cursor = 'default';
+        submenu.appendChild(item);
+    }
+}
+
+function editSelectedTool() {
+    if (selectedToolId && selectedToolModuleId) {
+        editTool(selectedToolId, selectedToolModuleId, { preventDefault: () => {} });
+        closeToolContextMenu();
+    }
+}
+
+function deleteSelectedTool() {
+    if (selectedToolId && selectedToolModuleId) {
+        if (confirm('确定要删除这个工具吗？')) {
+            deleteTool(selectedToolId, selectedToolModuleId, { preventDefault: () => {} });
+            closeToolContextMenu();
+        }
+    }
+}
+
+function moveToolToModule(toolId, fromModuleId, toModuleId) {
+    const fromModule = currentModules.find(m => m.id === fromModuleId);
+    const toModule = currentModules.find(m => m.id === toModuleId);
+    
+    if (!fromModule || !toModule) return;
+    
+    const toolIndex = fromModule.tools.findIndex(t => t.id === toolId);
+    if (toolIndex === -1) return;
+    
+    // 移动工具
+    const [tool] = fromModule.tools.splice(toolIndex, 1);
+    toModule.tools.push(tool);
+    
+    saveModules();
+    renderModules();
+    
+    // 显示移动成功提示
+    const toolName = tool.name;
+    const fromModuleName = fromModule.name;
+    const toModuleName = toModule.name;
+    
+    showToast(`✅ 已将 "${toolName}" 从 "${fromModuleName}" 移动到 "${toModuleName}"`);
+    
+    closeToolContextMenu();
+}
+
+function closeToolContextMenu() {
+    const contextMenu = document.getElementById('toolContextMenu');
+    contextMenu.style.display = 'none';
+    contextMenuVisible = false;
+    document.removeEventListener('click', closeContextMenu);
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        z-index: 10000;
+        animation: fadeInOut 2s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 2000);
+}
+
+// 添加CSS动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    }
+`;
+document.head.appendChild(style);
+
+
+
+
+
+
+
         
-        function initToolDragAndDrop(moduleElement) {
-            const toolContainer = moduleElement.querySelector('.module-content');
-            if (!toolContainer) return;
+        // 拖拽系统
+function initModuleDragAndDrop() {
+    const container = document.getElementById('modulesContainer');
+    
+    // 检查是否已存在Sortable实例
+    if (container.sortable) {
+        container.sortable.destroy();
+    }
+    
+    // 创建Sortable实例
+    container.sortable = new Sortable(container, {
+        animation: 150,
+        ghostClass: 'dragging',
+        chosenClass: 'dragging',
+        dragClass: 'dragging',
+        // 关键修改：根据编辑模式决定是否启用拖拽
+        disabled: !isEditMode,
+        onEnd: function(evt) {
+            if (isEditMode) { // 只有在编辑模式下才保存顺序
+                updateModuleOrder();
+            }
+        }
+    });
+}
+
+
+
+function initToolDragAndDrop(moduleElement) {
+    const toolContainer = moduleElement.querySelector('.module-content');
+    if (!toolContainer) return;
+    
+    const moduleId = moduleElement.dataset.moduleId;
+    
+    // 检查是否已存在Sortable实例
+    if (toolContainer.sortable) {
+        toolContainer.sortable.destroy();
+    }
+    
+    // 创建Sortable实例
+    toolContainer.sortable = new Sortable(toolContainer, {
+        animation: 150,
+        ghostClass: 'tool-dragging',
+        chosenClass: 'tool-dragging',
+        dragClass: 'tool-dragging',
+        // 关键修改：根据编辑模式决定是否启用拖拽
+        disabled: !isEditMode,
+        group: 'tools',
+        draggable: '.tool-item',
+        onEnd: function(evt) {
+            // 只有在编辑模式下才处理拖拽
+            if (!isEditMode) return;
             
-            new Sortable(toolContainer, {
-                animation: 150,
-                ghostClass: 'tool-dragging',
-                chosenClass: 'tool-dragging',
-                dragClass: 'tool-dragging',
-                handle: isEditMode ? '.tool-item' : false,
-                disabled: !isEditMode,
-                onEnd: function(evt) {
+            const toContainer = evt.to;
+            const toModuleElement = toContainer.closest('.module');
+            
+            if (toModuleElement) {
+                const toModuleId = toModuleElement.dataset.moduleId;
+                const toolId = evt.item.dataset.toolId;
+                
+                if (moduleId !== toModuleId) {
+                    // 跨模块拖拽
+                    moveToolToModule(toolId, moduleId, toModuleId);
+                } else {
+                    // 同模块内拖拽
                     updateToolOrderInModule(moduleElement);
                 }
-            });
+            }
         }
+    });
+}
+
+
         
-        function initDragAndDrop() {
-            initModuleDragAndDrop();
-            document.querySelectorAll('.module').forEach(module => {
-                initToolDragAndDrop(module);
-            });
-        }
+
+
+
+function initDragAndDrop() {
+    if (!isEditMode) return; // 关键：只在编辑模式下初始化拖拽
+    
+    initModuleDragAndDrop();
+    document.querySelectorAll('.module').forEach(module => {
+        initToolDragAndDrop(module);
+    });
+}
+
+
+
+
+
         
         // 模块和工具管理功能
         function generateToolId() {
@@ -2368,23 +3464,26 @@
             let toolsHtml = '';
             if (module.tools && module.tools.length > 0) {
                 module.tools.forEach(tool => {
-                    toolsHtml += `
-                        <a href="${tool.url}" target="_blank" class="tool-item" data-tool-id="${tool.id}">
-                            <div class="tool-controls">
-                                <button class="tool-edit-btn" onclick="editTool('${tool.id}', '${module.id}', event)">✏️</button>
-                                <button class="tool-delete-btn" onclick="deleteTool('${tool.id}', '${module.id}', event)">×</button>
-                            </div>
-                            <div class="tool-icon">
-                                ${tool.icon.startsWith('http') || tool.icon.startsWith('data:image') ? 
-                                    `<img src="${tool.icon}" alt="${tool.name}" onerror="this.style.display='none';this.parentElement.innerHTML='${tool.name.charAt(0)}';">` : 
-                                    tool.icon}
-                            </div>
-                            <div class="tool-info">
-                                <div class="tool-name">${tool.name}</div>
-                                <div class="tool-desc">${tool.desc}</div>
-                            </div>
-                        </a>
-                    `;
+toolsHtml += `
+    <a href="${tool.url}" target="_blank" class="tool-item" 
+       data-tool-id="${tool.id}" 
+       data-module-id="${module.id}"
+       oncontextmenu="showToolContextMenu('${tool.id}', '${module.id}', event); return false;">
+        <div class="tool-controls">
+            <button class="tool-edit-btn" onclick="editTool('${tool.id}', '${module.id}', event)">✏️</button>
+            <button class="tool-delete-btn" onclick="deleteTool('${tool.id}', '${module.id}', event)">×</button>
+        </div>
+        <div class="tool-icon">
+            ${tool.icon.startsWith('http') || tool.icon.startsWith('data:image') ? 
+                `<img src="${tool.icon}" alt="${tool.name}" onerror="this.style.display='none';this.parentElement.innerHTML='${tool.name.charAt(0)}';">` : 
+                tool.icon}
+        </div>
+        <div class="tool-info">
+            <div class="tool-name">${tool.name}</div>
+            <div class="tool-desc">${tool.desc}</div>
+        </div>
+    </a>
+`;
                 });
             } else {
                 toolsHtml = `
@@ -2421,106 +3520,191 @@
         }
         
         // 编辑工具功能
-        function editTool(toolId, moduleId, event) {
-            if (event) event.preventDefault();
-            
-            const module = currentModules.find(m => m.id === moduleId);
-            if (!module) return;
-            
-            const tool = module.tools.find(t => t.id === toolId);
-            if (!tool) return;
-            
-            editingTool = { ...tool, moduleId };
-            
-            document.getElementById('toolModalTitle').textContent = '✏️ 编辑工具';
-            document.getElementById('toolModalSubmitBtn').textContent = '保存更改';
-            document.getElementById('editingToolId').value = toolId;
-            
-            updateTargetModuleSelect();
-            document.getElementById('targetModule').value = moduleId;
-            document.getElementById('toolName').value = tool.name;
-            document.getElementById('toolUrl').value = tool.url;
-            document.getElementById('toolIcon').value = tool.icon.startsWith('http') || tool.icon.startsWith('data:image') ? '' : tool.icon;
-            document.getElementById('toolDescription').value = tool.desc;
-            
-            uploadedToolIcon = null;
-            document.getElementById('toolIconFileName').textContent = '';
-            
-            document.getElementById('addToolModal').style.display = 'flex';
+function editTool(toolId, moduleId, event) {
+    if (event) event.preventDefault();
+    
+    const module = currentModules.find(m => m.id === moduleId);
+    if (!module) return;
+    
+    const tool = module.tools.find(t => t.id === toolId);
+    if (!tool) return;
+    
+    editingTool = { ...tool, moduleId };
+    
+    document.getElementById('toolModalTitle').textContent = '✏️ 编辑工具';
+    document.getElementById('toolModalSubmitBtn').textContent = '保存更改';
+    document.getElementById('editingToolId').value = toolId;
+    
+    updateTargetModuleSelect();
+    document.getElementById('targetModule').value = moduleId;
+    document.getElementById('toolName').value = tool.name;
+    document.getElementById('toolUrl').value = tool.url;
+    
+    // 处理图标显示
+    if (tool.icon && (tool.icon.startsWith('data:image') || tool.icon.startsWith('http'))) {
+        // 图片图标：清空输入框，显示文件名提示
+        document.getElementById('toolIcon').value = '';
+        if (tool.icon.startsWith('data:image')) {
+            document.getElementById('toolIconFileName').textContent = '已有自定义图片图标（保留）';
+            // 缓存图标以便编辑时保留
+            toolIconCache.set(toolId, tool.icon);
+        } else {
+            document.getElementById('toolIconFileName').textContent = `已有图标: ${tool.icon.substring(0, 50)}...`;
         }
+    } else {
+        // Emoji图标：显示在输入框中
+        document.getElementById('toolIcon').value = tool.icon || '🔗';
+        document.getElementById('toolIconFileName').textContent = '';
+    }
+    
+    document.getElementById('toolDescription').value = tool.desc || '';
+    
+    uploadedToolIcon = null;
+    
+    document.getElementById('addToolModal').style.display = 'flex';
+}
+
+
+
+
         
-        function deleteTool(toolId, moduleId, event) {
-            if (event) event.preventDefault();
-            
-            if (!confirm('确定要删除这个工具吗？')) return;
-            
-            const module = currentModules.find(m => m.id === moduleId);
-            if (module) {
-                module.tools = module.tools.filter(t => t.id !== toolId);
-                saveModules();
-                renderModules();
-            }
-        }
-        
-        function saveTool() {
-            const toolId = document.getElementById('editingToolId').value;
-            const moduleId = document.getElementById('targetModule').value;
-            const name = document.getElementById('toolName').value.trim();
-            const url = document.getElementById('toolUrl').value.trim();
-            let icon = document.getElementById('toolIcon').value.trim() || '🔗';
-            const desc = document.getElementById('toolDescription').value.trim();
-            
-            if (!name || !url) {
-                alert('请填写工具名称和网址');
-                return;
-            }
-            
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                alert('网址格式不正确，请以 http:// 或 https:// 开头');
-                return;
-            }
-            
-            // 优先使用上传的图标
-            if (uploadedToolIcon) {
-                icon = uploadedToolIcon;
-            }
-            
-            const module = currentModules.find(m => m.id === moduleId);
-            if (!module) {
-                alert('模块不存在');
-                return;
-            }
-            
-            if (toolId) {
-                // 编辑现有工具
-                const toolIndex = module.tools.findIndex(t => t.id === toolId);
-                if (toolIndex !== -1) {
-                    module.tools[toolIndex] = {
-                        ...module.tools[toolIndex],
-                        name,
-                        url,
-                        icon,
-                        desc
-                    };
-                }
+
+function deleteTool(toolId, moduleId, event) {
+    if (event) event.preventDefault();
+    
+    if (!confirm('确定要删除这个工具吗？')) return;
+    
+    const module = currentModules.find(m => m.id === moduleId);
+    if (module) {
+        module.tools = module.tools.filter(t => t.id !== toolId);
+        // 清除图标缓存
+        toolIconCache.delete(toolId);
+        saveModules();
+        renderModules();
+    }
+}
+ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+function saveTool() {
+    const toolId = document.getElementById('editingToolId').value;
+    const moduleId = document.getElementById('targetModule').value;
+    const name = document.getElementById('toolName').value.trim();
+    const url = document.getElementById('toolUrl').value.trim();
+    let icon = document.getElementById('toolIcon').value.trim();
+    const desc = document.getElementById('toolDescription').value.trim();
+    
+    if (!name || !url) {
+        alert('请填写工具名称和网址');
+        return;
+    }
+    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('网址格式不正确，请以 http:// 或 https:// 开头');
+        return;
+    }
+    
+    const module = currentModules.find(m => m.id === moduleId);
+    if (!module) {
+        alert('模块不存在');
+        return;
+    }
+    
+    // 确定最终使用的图标
+    let finalIcon = null;
+    
+    if (toolId) {
+        // 编辑模式：检查是否有新的图标上传或粘贴
+        if (uploadedToolIcon) {
+            // 有新图标
+            finalIcon = uploadedToolIcon;
+            // 缓存新图标
+            toolIconCache.set(toolId, uploadedToolIcon);
+        } else if (icon && icon.trim() !== '') {
+            // 使用输入的emoji或URL
+            finalIcon = icon;
+            toolIconCache.delete(toolId);
+        } else {
+            // 没有新图标，尝试从缓存恢复
+            const cachedIcon = toolIconCache.get(toolId);
+            if (cachedIcon) {
+                finalIcon = cachedIcon;
             } else {
-                // 添加新工具
-                const newTool = {
-                    id: generateToolId(),
-                    name: name,
-                    url: url,
-                    icon: icon,
-                    desc: desc
-                };
-                
-                module.tools.push(newTool);
+                // 从现有工具中获取
+                const existingTool = module.tools.find(t => t.id === toolId);
+                if (existingTool && existingTool.icon) {
+                    finalIcon = existingTool.icon;
+                } else {
+                    finalIcon = '🔗'; // 默认图标
+                }
             }
-            
-            saveModules();
-            renderModules();
-            closeAddToolModal();
         }
+    } else {
+        // 添加模式
+        if (uploadedToolIcon) {
+            finalIcon = uploadedToolIcon;
+        } else if (icon && icon.trim() !== '') {
+            finalIcon = icon;
+        } else {
+            finalIcon = '🔗';
+        }
+    }
+    
+    if (toolId) {
+        // 编辑现有工具
+        const toolIndex = module.tools.findIndex(t => t.id === toolId);
+        if (toolIndex !== -1) {
+            const oldIcon = module.tools[toolIndex].icon;
+            module.tools[toolIndex] = {
+                ...module.tools[toolIndex],
+                name,
+                url,
+                icon: finalIcon,
+                desc
+            };
+            
+            // 如果图标发生了变化，更新缓存
+            if (oldIcon !== finalIcon && finalIcon.startsWith('data:image')) {
+                toolIconCache.set(toolId, finalIcon);
+            }
+        }
+    } else {
+        // 添加新工具
+        const newToolId = generateToolId();
+        const newTool = {
+            id: newToolId,
+            name: name,
+            url: url,
+            icon: finalIcon,
+            desc: desc
+        };
         
+        module.tools.push(newTool);
+        
+        // 缓存新工具的图标
+        if (finalIcon.startsWith('data:image')) {
+            toolIconCache.set(newToolId, finalIcon);
+        }
+    }
+    
+    saveModules();
+    renderModules();
+    closeAddToolModal();
+    clearToolForm();
+}
+
+// 新增：清空工具表单的函数
+function clearToolForm() {
+    document.getElementById('toolName').value = '';
+    document.getElementById('toolUrl').value = '';
+    document.getElementById('toolIcon').value = '';
+    document.getElementById('toolDescription').value = '';
+    document.getElementById('toolIconFileName').textContent = '';
+    uploadedToolIcon = null;
+    document.getElementById('editingToolId').value = '';
+}
+        
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
         function updateToolOrderInModule(moduleElement) {
             const moduleId = moduleElement.dataset.moduleId;
             const module = currentModules.find(m => m.id === moduleId);
@@ -2542,33 +3726,87 @@
             module.tools = newToolOrder;
             saveModules();
         }
+
+
+
+
         
-        function toggleEditMode() {
-            isEditMode = !isEditMode;
-            document.body.classList.toggle('edit-mode', isEditMode);
-            
-            const editIcon = document.getElementById('editIcon');
-            const editText = document.getElementById('editText');
-            const modeIndicator = document.getElementById('modeIndicator');
-            
-            if (isEditMode) {
-                editIcon.textContent = '🔒';
-                editText.textContent = '退出编辑';
-                modeIndicator.innerHTML = '✏️ 编辑模式';
-                initDragAndDrop();
-            } else {
-                editIcon.textContent = '✏️';
-                editText.textContent = '进入编辑模式';
-                modeIndicator.innerHTML = '🔒 浏览模式';
-                // 重新初始化模块拖拽（禁用状态）
-                initModuleDragAndDrop();
-            }
-            
-            // 更新工具项的可拖拽状态
-            document.querySelectorAll('.tool-item').forEach(item => {
-                item.draggable = isEditMode;
-            });
+
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    document.body.classList.toggle('edit-mode', isEditMode);
+    
+    const editIcon = document.getElementById('editIcon');
+    const editText = document.getElementById('editText');
+    const modeIndicator = document.getElementById('modeIndicator');
+    
+    if (isEditMode) {
+        editIcon.textContent = '🔒';
+        editText.textContent = '退出编辑';
+        modeIndicator.innerHTML = '✏️ 编辑模式';
+        
+        // 启用拖拽功能
+        initDragAndDrop();
+        
+        // 更新工具项的可拖拽状态
+        document.querySelectorAll('.tool-item').forEach(item => {
+            item.style.cursor = 'move';
+        });
+        
+    } else {
+        editIcon.textContent = '✏️';
+        editText.textContent = '进入编辑模式';
+        modeIndicator.innerHTML = '🔒 浏览模式';
+        
+        // 禁用拖拽功能
+        disableDragAndDrop();
+        
+        // 恢复工具项的默认光标
+        document.querySelectorAll('.tool-item').forEach(item => {
+            item.style.cursor = 'pointer';
+        });
+    }
+}
+
+
+
+
+
+
+
+
+function disableDragAndDrop() {
+    const container = document.getElementById('modulesContainer');
+    
+    // 销毁模块拖拽
+    if (container.sortable) {
+        container.sortable.destroy();
+        container.sortable = null;
+    }
+    
+    // 销毁所有工具拖拽
+    document.querySelectorAll('.module-content').forEach(toolContainer => {
+        if (toolContainer.sortable) {
+            toolContainer.sortable.destroy();
+            toolContainer.sortable = null;
         }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         function updateModuleOrder() {
             const container = document.getElementById('modulesContainer');
@@ -2630,31 +3868,38 @@
             }
         }
         
-        function showAddToolModal(moduleId = null) {
-            updateTargetModuleSelect();
-            
-            // 重置表单
-            document.getElementById('toolModalTitle').textContent = '🔧 添加新工具';
-            document.getElementById('toolModalSubmitBtn').textContent = '添加工具';
-            document.getElementById('editingToolId').value = '';
-            document.getElementById('toolName').value = '';
-            document.getElementById('toolUrl').value = '';
-            document.getElementById('toolIcon').value = '';
-            document.getElementById('toolDescription').value = '';
-            document.getElementById('toolIconFileName').textContent = '';
-            uploadedToolIcon = null;
-            
-            // 如果指定了模块ID，则选中该模块
-            if (moduleId) {
-                document.getElementById('targetModule').value = moduleId;
-            } else if (currentModules.length > 0) {
-                // 默认选中第一个模块
-                document.getElementById('targetModule').value = currentModules[0].id;
-            }
-            
-            document.getElementById('addToolModal').style.display = 'flex';
-            document.getElementById('toolName').focus();
-        }
+
+function showAddToolModal(moduleId = null) {
+    updateTargetModuleSelect();
+    
+    // 重置表单
+    document.getElementById('toolModalTitle').textContent = '🔧 添加新工具';
+    document.getElementById('toolModalSubmitBtn').textContent = '添加工具';
+    document.getElementById('editingToolId').value = '';
+    document.getElementById('toolName').value = '';
+    document.getElementById('toolUrl').value = '';
+    document.getElementById('toolIcon').value = '';
+    document.getElementById('toolDescription').value = '';
+    document.getElementById('toolIconFileName').textContent = '';
+    uploadedToolIcon = null;
+    
+    // 如果指定了模块ID，则选中该模块
+    if (moduleId) {
+        document.getElementById('targetModule').value = moduleId;
+    } else if (currentModules.length > 0) {
+        // 默认选中第一个模块
+        document.getElementById('targetModule').value = currentModules[0].id;
+    }
+    
+    document.getElementById('addToolModal').style.display = 'flex';
+    document.getElementById('toolName').focus();
+    
+    // 添加粘贴按钮
+    setTimeout(addPasteButton, 100);
+}
+
+
+
         
         function closeAddToolModal() {
             document.getElementById('addToolModal').style.display = 'none';
@@ -2728,7 +3973,10 @@
                     </button>
                 </div>
             `;
-            
+
+
+
+
             document.getElementById('editModuleModal').style.display = 'flex';
         }
         
@@ -2766,9 +4014,9 @@
         
         function exportConfig() {
             const config = {
-                version: '4.2',
+                version: '5.0',
                 exportDate: new Date().toISOString(),
-                features: ['introduction', 'intro-background', 'background', 'module-drag', 'tool-drag', 'tool-edit', 'file-upload', 'color-bg', 'search', 'about'],
+                features: ['introduction', 'intro-background', 'background', 'module-drag', 'tool-drag', 'tool-edit', 'file-upload', 'color-bg', 'search', 'about', 'user-auth', 'cloud-sync'],
                 introduction: {
                     title: document.getElementById('introTitle').textContent,
                     content: document.getElementById('introContent').textContent
@@ -2796,7 +4044,6 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
-            // 显示导出成功提示
             alert('配置导出成功！\n文件已保存为：' + exportFileDefaultName);
         }
         
@@ -2813,90 +4060,40 @@
                     try {
                         const config = JSON.parse(event.target.result);
                         
-                        if (config.version && config.version.startsWith('4.')) {
-                            // 导入v4.x配置
-                            if (confirm(`将导入完整配置，这会覆盖当前所有设置，确定吗？`)) {
-                                // 导入介绍
-                                if (config.introduction) {
-                                    document.getElementById('introTitle').textContent = config.introduction.title;
-                                    document.getElementById('introContent').textContent = config.introduction.content;
-                                    localStorage.setItem('toolbox-intro-title', config.introduction.title);
-                                    localStorage.setItem('toolbox-intro-content', config.introduction.content);
-                                }
-                                
-                                // 导入介绍栏背景
-                                if (config.introBackground) {
-                                    localStorage.setItem('toolbox-intro-bg-color', config.introBackground.color || '#667eea');
-                                    localStorage.setItem('toolbox-intro-bg-opacity', config.introBackground.opacity || '90');
-                                }
-                                
-                                // 导入背景
-                                if (config.background) {
-                                    localStorage.setItem('toolbox-bg-type', config.background.type || 'image');
-                                    if (config.background.image) {
-                                        localStorage.setItem('toolbox-bg-image', config.background.image);
-                                    }
-                                    if (config.background.color) {
-                                        localStorage.setItem('toolbox-bg-color', config.background.color);
-                                    }
-                                    localStorage.setItem('toolbox-bg-overlay', config.background.overlay || '15');
-                                }
-                                
-                                // 导入模块
-                                currentModules = config.modules || [];
-                                saveModules();
-                                
-                                // 重新加载页面
-                                loadIntroduction();
-                                loadIntroductionBackground();
-                                loadBackground();
-                                renderModules();
-                                updateTargetModuleSelect();
-                                
-                                alert('配置导入成功！');
+                        if (confirm(`将导入配置，这会覆盖当前所有设置，确定吗？`)) {
+                            if (config.introduction) {
+                                document.getElementById('introTitle').textContent = config.introduction.title;
+                                document.getElementById('introContent').textContent = config.introduction.content;
+                                localStorage.setItem('toolbox-intro-title', config.introduction.title);
+                                localStorage.setItem('toolbox-intro-content', config.introduction.content);
                             }
-                        } else if (config.version && config.version.startsWith('3.')) {
-                            // 兼容v3.x配置
-                            if (confirm(`将导入v3.x配置，这会覆盖当前所有设置，确定吗？`)) {
-                                if (config.introduction) {
-                                    document.getElementById('introTitle').textContent = config.introduction.title;
-                                    document.getElementById('introContent').textContent = config.introduction.content;
-                                    localStorage.setItem('toolbox-intro-title', config.introduction.title);
-                                    localStorage.setItem('toolbox-intro-content', config.introduction.content);
-                                }
-                                
-                                if (config.background) {
-                                    localStorage.setItem('toolbox-bg-type', config.background.type || 'image');
-                                    if (config.background.image) {
-                                        localStorage.setItem('toolbox-bg-image', config.background.image);
-                                    }
-                                    if (config.background.color) {
-                                        localStorage.setItem('toolbox-bg-color', config.background.color);
-                                    }
-                                    localStorage.setItem('toolbox-bg-overlay', config.background.overlay || '15');
-                                }
-                                
-                                currentModules = config.modules || [];
-                                saveModules();
-                                
-                                loadIntroduction();
-                                loadBackground();
-                                renderModules();
-                                updateTargetModuleSelect();
-                                
-                                alert('v3.x配置导入成功！');
+                            
+                            if (config.introBackground) {
+                                localStorage.setItem('toolbox-intro-bg-color', config.introBackground.color || '#667eea');
+                                localStorage.setItem('toolbox-intro-bg-opacity', config.introBackground.opacity || '90');
                             }
-                        } else if (config.modules) {
-                            // 导入旧版本配置
-                            if (confirm(`将导入 ${config.modules.length} 个模块。这会覆盖当前模块配置，确定吗？`)) {
-                                currentModules = config.modules;
-                                saveModules();
-                                renderModules();
-                                updateTargetModuleSelect();
-                                alert('模块配置导入成功！');
+                            
+                            if (config.background) {
+                                localStorage.setItem('toolbox-bg-type', config.background.type || 'image');
+                                if (config.background.image) {
+                                    localStorage.setItem('toolbox-bg-image', config.background.image);
+                                }
+                                if (config.background.color) {
+                                    localStorage.setItem('toolbox-bg-color', config.background.color);
+                                }
+                                localStorage.setItem('toolbox-bg-overlay', config.background.overlay || '15');
                             }
-                        } else {
-                            throw new Error('配置文件格式不正确');
+                            
+                            currentModules = config.modules || [];
+                            saveModules();
+                            
+                            loadIntroduction();
+                            loadIntroductionBackground();
+                            loadBackground();
+                            renderModules();
+                            updateTargetModuleSelect();
+                            
+                            alert('配置导入成功！');
                         }
                     } catch (error) {
                         alert('导入失败：' + error.message);
@@ -2908,9 +4105,176 @@
             
             input.click();
         }
+
+
+// ==================== 新增：剪贴板粘贴图片功能 ====================
+
+// 初始化剪贴板监听
+function initClipboardPaste() {
+    const toolIconInput = document.getElementById('toolIcon');
+    if (!toolIconInput) return;
+    
+    // 监听粘贴事件
+    toolIconInput.addEventListener('paste', async (event) => {
+        const items = event.clipboardData.items;
+        
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            
+            if (item.type.indexOf('image') !== -1) {
+                event.preventDefault();
+                
+                const file = item.getAsFile();
+                if (!file) continue;
+                
+                // 验证文件类型
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('剪贴板图片格式不支持，请使用 JPG、PNG、GIF 或 WEBP 格式');
+                    return;
+                }
+                
+                // 验证文件大小
+                const maxSize = 1 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                    alert(`图标大小不能超过1MB\n当前图片: ${sizeInMB}MB`);
+                    return;
+                }
+                
+                // 读取图片
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 验证图片尺寸
+                    const img = new Image();
+                    img.onload = function() {
+                        const maxSize = 200;
+                        if (img.width > maxSize || img.height > maxSize) {
+                            if (confirm(`图片尺寸为 ${img.width}x${img.height} 像素，建议不超过 ${maxSize}x${maxSize} 像素。\n是否仍要使用此图片？`)) {
+                                uploadedToolIcon = e.target.result;
+                                document.getElementById('toolIconFileName').textContent = `已从剪贴板粘贴: ${img.width}x${img.height} 像素`;
+                                document.getElementById('toolIcon').value = '';
+                                alert('✅ 图片已从剪贴板添加！');
+                            }
+                        } else {
+                            uploadedToolIcon = e.target.result;
+                            document.getElementById('toolIconFileName').textContent = `已从剪贴板粘贴: ${img.width}x${img.height} 像素`;
+                            document.getElementById('toolIcon').value = '';
+                            alert('✅ 图片已从剪贴板添加！');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                
+                break;
+            }
+        }
+    });
+    
+    // 添加提示信息
+    const toolIconGroup = document.getElementById('toolIcon').closest('.form-group');
+    if (toolIconGroup && !toolIconGroup.querySelector('.clipboard-hint')) {
+        const hint = document.createElement('small');
+        hint.className = 'clipboard-hint';
+        hint.innerHTML = '💡 提示：可以直接粘贴剪贴板中的图片（Ctrl+V）';
+        toolIconGroup.appendChild(hint);
+    }
+}
+
+// 从剪贴板读取图片（备用方案）
+async function pasteImageFromClipboard() {
+    try {
+        const permission = await navigator.permissions.query({ name: 'clipboard-read' });
+        if (permission.state === 'denied') {
+            alert('无法访问剪贴板，请检查浏览器权限设置');
+            return;
+        }
+        
+        const clipboardItems = await navigator.clipboard.read();
+        
+        for (const clipboardItem of clipboardItems) {
+            const imageTypes = clipboardItem.types.filter(type => type.startsWith('image/'));
+            
+            for (const type of imageTypes) {
+                const blob = await clipboardItem.getType(type);
+                
+                if (blob.size > 1 * 1024 * 1024) {
+                    alert('剪贴板图片大小超过1MB限制');
+                    continue;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        if (img.width > 200 || img.height > 200) {
+                            if (confirm(`图片尺寸 ${img.width}x${img.height} 像素，建议不超过 200x200 像素。\n是否仍要使用此图片？`)) {
+                                uploadedToolIcon = e.target.result;
+                                document.getElementById('toolIconFileName').textContent = `已从剪贴板粘贴: ${img.width}x${img.height} 像素`;
+                                document.getElementById('toolIcon').value = '';
+                                alert('✅ 图片已从剪贴板添加！');
+                            }
+                        } else {
+                            uploadedToolIcon = e.target.result;
+                            document.getElementById('toolIconFileName').textContent = `已从剪贴板粘贴: ${img.width}x${img.height} 像素`;
+                            document.getElementById('toolIcon').value = '';
+                            alert('✅ 图片已从剪贴板添加！');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
+                return;
+            }
+        }
+        
+        alert('剪贴板中没有找到图片');
+    } catch (error) {
+        console.error('读取剪贴板失败:', error);
+        alert('无法读取剪贴板，请使用 Ctrl+V 粘贴图片');
+    }
+}
+
+// 添加粘贴按钮
+function addPasteButton() {
+    const toolIconGroup = document.getElementById('toolIcon').closest('.form-group');
+    if (toolIconGroup && !toolIconGroup.querySelector('.paste-btn')) {
+        const pasteBtn = document.createElement('button');
+        pasteBtn.type = 'button';
+        pasteBtn.className = 'avatar-upload-btn';
+        pasteBtn.style.cssText = 'margin-left: 10px; background: #9b59b6;';
+        pasteBtn.innerHTML = '📋 粘贴图片';
+        pasteBtn.onclick = pasteImageFromClipboard;
+        
+        const inputWrapper = document.getElementById('toolIcon').parentElement;
+        inputWrapper.style.display = 'flex';
+        inputWrapper.style.gap = '10px';
+        inputWrapper.appendChild(pasteBtn);
+    }
+}
+
+
     </script>
     
-    <!-- 引入 Sortable.js 库以实现更好的拖拽功能 -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- 工具右键菜单 -->
+    <div class="tool-context-menu" id="toolContextMenu">
+        <div class="context-menu-item" onclick="editSelectedTool()">
+            <span>✏️</span>
+            <span>编辑工具</span>
+        </div>
+        <div class="context-menu-item" onclick="deleteSelectedTool()">
+            <span>🗑️</span>
+            <span>删除工具</span>
+        </div>
+        <div class="context-menu-item move-to-module">
+            <span>📤</span>
+            <span>移动到模块</span>
+            <div class="module-submenu" id="moduleSubmenu">
+                <!-- 模块列表会动态生成 -->
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
